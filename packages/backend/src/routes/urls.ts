@@ -1,0 +1,87 @@
+import { Router } from "express";
+import { pool } from "../db/pool.js";
+import { toBase62 } from "../lib/base62.js";
+
+export const urlsRouter = Router();
+
+function isValidHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    // Restrict to http(s) so nobody can store a `javascript:` or `data:`
+    // URL that we then happily redirect a browser to.
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+// POST /api/urls  { longUrl } -> create a short link
+urlsRouter.post("/", async (req, res) => {
+  const { longUrl } = req.body ?? {};
+
+  if (typeof longUrl !== "string" || !isValidHttpUrl(longUrl)) {
+    return res.status(400).json({ error: "longUrl must be a valid http(s) URL" });
+  }
+
+  // Pull the next id straight from the table's sequence, then encode it and
+  // insert id + short_code together in one statement. `nextval()` is
+  // atomic -- concurrent requests each get a distinct id with no locking in
+  // application code. (An earlier version of this route inserted a
+  // placeholder short_code and updated it after encoding the id; that's a
+  // race: two concurrent inserts could both try to write the same
+  // placeholder and collide on the unique constraint. Handing out the id
+  // first avoids the two-step window entirely.)
+  const idResult = await pool.query<{ nextval: string }>(
+    "select nextval(pg_get_serial_sequence('urls', 'id')) as nextval",
+  );
+  const id = BigInt(idResult.rows[0].nextval);
+  const shortCode = toBase62(id);
+
+  const insertResult = await pool.query<{ created_at: string }>(
+    "insert into urls (id, short_code, long_url) values ($1, $2, $3) returning created_at",
+    [id.toString(), shortCode, longUrl],
+  );
+  const { created_at } = insertResult.rows[0];
+
+  const baseUrl = process.env.BASE_URL ?? `${req.protocol}://${req.get("host")}`;
+  res.status(201).json({
+    shortCode,
+    shortUrl: `${baseUrl}/${shortCode}`,
+    longUrl,
+    clickCount: 0,
+    createdAt: created_at,
+  });
+});
+
+// GET /api/urls -> most recently created links, for the homepage list
+urlsRouter.get("/", async (_req, res) => {
+  const result = await pool.query(
+    "select short_code, long_url, click_count, created_at from urls order by created_at desc limit 50",
+  );
+  res.json(
+    result.rows.map((row) => ({
+      shortCode: row.short_code,
+      longUrl: row.long_url,
+      clickCount: Number(row.click_count),
+      createdAt: row.created_at,
+    })),
+  );
+});
+
+// GET /api/urls/:code/stats -> lookup without incrementing the click count
+urlsRouter.get("/:code/stats", async (req, res) => {
+  const result = await pool.query(
+    "select short_code, long_url, click_count, created_at from urls where short_code = $1",
+    [req.params.code],
+  );
+  if (result.rows.length === 0) {
+    return res.status(404).json({ error: "short code not found" });
+  }
+  const row = result.rows[0];
+  res.json({
+    shortCode: row.short_code,
+    longUrl: row.long_url,
+    clickCount: Number(row.click_count),
+    createdAt: row.created_at,
+  });
+});

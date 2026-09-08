@@ -1,0 +1,112 @@
+:root {
+  color-scheme: light dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.subtitle {
+  margin: 0.25rem 0 2rem;
+  opacity: 0.7;
+}
+
+.shorten-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.shorten-form input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #8884;
+}
+
+.shorten-form button {
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: none;
+  background: #6366f1;
+  color: white;
+  cursor: pointer;
+}
+
+.shorten-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.error {
+  color: #ef4444;
+}
+
+.link-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.link-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #8883;
+  border-radius: 6px;
+  /* Flex items default to min-width: auto, meaning a child won't shrink
+     past its own content's natural width -- so .long-url's ellipsis below
+     never kicked in and instead pushed this <li>, then .page, then body,
+     wider than the viewport. min-width: 0 here (and on the child) opts
+     back into "shrink to fit", which is what actually enables the
+     ellipsis truncation. */
+  min-width: 0;
+}
+
+.link-list li.empty {
+  opacity: 0.6;
+  justify-content: center;
+}
+
+.link-list a {
+  font-weight: 600;
+  color: #6366f1;
+  white-space: nowrap;
+}
+
+.long-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.75;
+}
+
+.clicks {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+  white-space: nowrap;
+}
