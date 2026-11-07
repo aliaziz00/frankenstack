@@ -40,23 +40,29 @@ frankenstack/
 
 ## Local setup
 
-1. **Start Postgres:**
+1. **Create your env files** (both are gitignored; never commit them). Set
+   the same password in both:
+   ```bash
+   cp .env.example .env                                     # set POSTGRES_PASSWORD
+   cp packages/backend/.env.example packages/backend/.env   # put it in DATABASE_URL
+   ```
+2. **Start Postgres:**
    ```bash
    npm run db:up
    ```
-2. **Install dependencies** (from repo root — installs both workspaces):
+3. **Install dependencies** (from repo root — installs both workspaces):
    ```bash
    npm install
    ```
-3. **Apply the schema:**
+4. **Apply the schema:**
    ```bash
    npm run db:migrate
    ```
-4. **Run the backend** (http://localhost:4000):
+5. **Run the backend** (http://localhost:4000):
    ```bash
    npm run dev:backend
    ```
-5. **Run the frontend** (http://localhost:5173), in another terminal:
+6. **Run the frontend** (http://localhost:5173), in another terminal:
    ```bash
    npm run dev:frontend
    ```
@@ -73,9 +79,11 @@ under `/s` so the site root stays free for the frontend on a single domain.
 3. Add backend routes under `/api/<slug>` and any schema to `schema.sql`.
 4. Add a section to CONCEPTS.md.
 
-Backend config lives in `packages/backend/.env` (already filled in for the
-local Docker Postgres — copy `.env.example` if you ever need to point it
-somewhere else).
+Config lives in two gitignored files: the root `.env` (read by Docker Compose
+for the Postgres password) and `packages/backend/.env` (the backend's
+`DATABASE_URL`, `PORT`, `BASE_URL`). Postgres only applies `POSTGRES_PASSWORD`
+when it first creates its data volume, so changing it later means running
+`ALTER USER` inside the container, or recreating the volume.
 
 ## Feature 1: URL shortener
 
