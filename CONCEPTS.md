@@ -3,6 +3,29 @@
 A running record of what each feature was built to teach — useful as
 interview-prep review material later. Newest first.
 
+## Platform: CI, repo protection and secrets hygiene
+
+Not a feature, but the project's delivery pipeline. Every row is a decision
+that had real alternatives, with the reasoning for the one chosen.
+
+| Concept | Where | Notes |
+| --- | --- | --- |
+| CI vs CD | `.github/workflows/ci.yml` | We built continuous integration: every PR and every push to `main` is checked automatically. Continuous delivery (deploying on merge) is deliberately not built yet; it depends on a hosting decision. CI is the safety net CD later relies on, so it comes first. |
+| Job layout | `ci.yml` (`checks`, `audit`) | Two jobs, not one and not four. `checks` runs lint, typecheck and build sequentially behind one install; `audit` is separate because it can fail for reasons unrelated to a change (a new advisory published overnight). A separate job means it can be made non-required without losing the other gate. Four parallel jobs would be faster but pay for four installs, which is overkill at this size. |
+| Fail-fast ordering | `ci.yml` steps | Cheapest check first: lint, then typecheck, then the slower build. A deliberately broken PR failed at lint and the typecheck and build steps were skipped, which saves minutes and gives the quickest possible signal. |
+| Reproducible installs | `npm ci`, `package-lock.json` | `npm ci` installs exactly what the lockfile pins and fails if it disagrees with `package.json`; `npm install` can silently drift. The lockfile was generated on macOS, so there was a real risk it lacked Linux native binaries (esbuild, rollup). It did include them and the first Linux run passed. Worth knowing because it breaks in practice (npm issue 4828). |
+| Shared commands | root `package.json` scripts | CI calls `lint`, `typecheck` and `build` by name, the same commands used locally, so "passes on my machine" and "passes in CI" mean the same thing. Calling `tsc` directly inside the workflow would let the two drift apart. |
+| Dependency auditing and thresholds | `ci.yml` (`npm audit --audit-level=high`) | Failing on moderate would fail today (accepted dev-only findings), and a gate that is always red gets ignored. High/critical blocks; moderate is reported. Two accepted advisories are documented in the README: React Router (the fix is a breaking v7 upgrade) and the ESLint toolchain's `minimatch` (dev-only, pinned by upstream, unreachable here). Note that npm lists one vulnerable package once per dependent, so one advisory showed up as ten. |
+| Patch fixes and two-pass resolution | `npm audit fix` | The non-breaking fixes were patch bumps in the lockfile only. `npm audit fix` needed two passes because the Express fix only became visible after the first. The critical and high findings were in runtime dependencies (Express's `proxy-addr`, `body-parser`), which matter far more than dev-only ones. |
+| Branch protection with rulesets | repo ruleset "Protect main" | Rules on `main`: changes must come via a PR, and the `checks` job must pass. Rulesets over classic branch protection because the owner-bypass can be "only through a pull request": nobody pushes straight to `main`, but a PR can still be merged in an emergency. Verified in practice: a PR showed `BLOCKED` while checks ran and `CLEAN` after. Without protection, a red PR was still mergeable. |
+| Required approvals = 0 | ruleset | A solo project can't approve its own PR, so requiring an approval would deadlock. The PR requirement still forces CI to run before code lands. A team would require at least one review. |
+| Least privilege | `ci.yml` (`permissions: contents: read`) | The workflow's token can only read the repo, so a compromised step couldn't push code or change settings. No secrets are used by CI at all. |
+| Supply-chain choices | `ci.yml` (`uses: ...@v7`, `ubuntu-latest`) | Actions are pinned to a major version tag, which is readable but movable; pinning to a commit SHA is stricter and needs Dependabot to stay current. `ubuntu-latest` was accepted knowing GitHub moves the label (a migration to Ubuntu 26 was announced); a pinned image is reproducible but needs manual bumps before end of life. |
+| Secrets hygiene | `docker-compose.yml`, `.env.example` | The first commit hardcoded a local DB password. Fix: Compose reads `POSTGRES_PASSWORD` from a gitignored `.env` (`${VAR:?message}` fails loudly if unset), with a committed `.env.example` placeholder. History was left alone because it only protected a throwaway local database, a deliberate trade-off. Rule of thumb: a committed secret can only be rotated, never un-leaked, so stop it at the door and rotate on suspicion. |
+| Rotating a DB credential | `ALTER USER` | Postgres reads `POSTGRES_PASSWORD` only when it first initialises the data volume, so changing the environment variable later does nothing to an existing database. Rotating in place means `ALTER USER`, sent over stdin so the password stays out of process arguments and shell history. |
+| Verifying a negative | password test | A first check "proved" the old password still worked, but it connected over the container's loopback, which is trusted. A trustworthy check goes through the published port and the real auth path. A test that cannot fail proves nothing. |
+| Runtime version hygiene | Node 20 to 26 | Node 20 reached end of life (April 2026) and the machine had three installs, so an old one could silently win on `PATH`. Moving to the current LTS line meant removing the extra install first; otherwise the upgrade would not have taken effect. Check the official release page, not a snippet: an earlier answer used a stale source. |
+
 ## Feature 1: URL shortener
 
 | Concept | Where | Notes |
