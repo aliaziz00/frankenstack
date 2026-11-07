@@ -13,6 +13,7 @@ interview-prep review material later. Newest first.
 | Connection pooling | `src/db/pool.ts` | One pooled set of connections shared across requests, not one connection per request — opening a Postgres connection (TCP + auth handshake) is comparatively expensive. Same idea every ORM/framework wraps for you. |
 | Input validation / basic security | `src/routes/urls.ts` | Reject anything that isn't an `http(s)` URL before storing it, so the redirect endpoint can't be turned into an open redirector for `javascript:`/`data:` payloads. |
 | Reverse proxy (dev version) | `packages/frontend/vite.config.ts` | Vite's dev proxy forwards `/api/*` to the backend so the browser only sees one origin — a small-scale stand-in for the gateway/reverse-proxy that would sit in front of both services in production. |
+| Routing on one domain | `src/index.ts`, `vite.config.ts` | Short links moved from `/:code` to `/s/:code` so the site root belongs to the frontend. Gotcha hit while doing it: Vite proxy keys are prefix matches, so `'/s'` also captured `/src/main.tsx` and the whole app went blank with 404s. Anchor with `'^/s/'`. Same class of bug as an overly greedy location block in nginx. |
 | Migrations (minimal version) | `src/db/migrate.ts` | Currently just (re)applies one idempotent `schema.sql`. Fine with no data to preserve; revisit with a real migration tool once the schema needs to change under real data — see ROADMAP. |
 
 ## How to use this file

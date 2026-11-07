@@ -1,9 +1,3 @@
-// The redirect route (GET /:code) lives on the backend itself, not behind
-// the /api proxy -- a real short link has to be a URL you can hand to
-// anyone, not just an in-app fetch path. Same idea as bit.ly serving
-// redirects from its own domain rather than your app's.
-export const BACKEND_ORIGIN = "http://localhost:4000";
-
 export interface ShortLink {
   shortCode: string;
   shortUrl?: string;

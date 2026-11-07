@@ -11,20 +11,10 @@ body {
 }
 
 .page {
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 3rem 1.5rem;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
-header h1 {
-  margin: 0;
-  font-size: 1.75rem;
-}
-
-.subtitle {
-  margin: 0.25rem 0 2rem;
-  opacity: 0.7;
 }
 
 .shorten-form {
@@ -109,4 +99,124 @@ header h1 {
   font-variant-numeric: tabular-nums;
   opacity: 0.6;
   white-space: nowrap;
+}
+
+a {
+  color: #6366f1;
+}
+
+.nav {
+  margin-bottom: 2.5rem;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.hero h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.9rem;
+  line-height: 1.2;
+}
+
+.hero p,
+.subtitle,
+.muted {
+  opacity: 0.7;
+}
+
+.lab-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.lab-card {
+  display: block;
+  padding: 1rem 1.2rem;
+  border: 1px solid #8883;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.lab-card:hover {
+  border-color: #6366f1;
+}
+
+.lab-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lab-card h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.lab-card p {
+  margin: 0.4rem 0 0.75rem;
+  opacity: 0.8;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid #8884;
+}
+
+.badge.live {
+  color: #22c55e;
+  border-color: #22c55e66;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tags li {
+  font-size: 0.78rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 4px;
+  background: #8882;
+}
+
+.back {
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.lab-page header h1 {
+  margin: 0.75rem 0 0.25rem;
+}
+
+.lab-page section {
+  margin-top: 2.25rem;
+}
+
+.lab-page h2 {
+  font-size: 1.2rem;
+  margin: 0 0 0.75rem;
+}
+
+.lab-page h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.35rem;
+}
+
+.decision p {
+  margin: 0;
+  line-height: 1.55;
+  opacity: 0.85;
 }

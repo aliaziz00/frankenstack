@@ -3,7 +3,7 @@ import { pool } from "../db/pool.js";
 
 export const redirectRouter = Router();
 
-// GET /:code -> 302 redirect to the long URL, atomically incrementing the
+// GET /s/:code -> 302 redirect to the long URL, atomically incrementing the
 // click counter. `update ... returning` does the read-and-write in one
 // round trip at the database, so concurrent redirects can't stomp on each
 // other's counter update the way a separate "read count, add one, write

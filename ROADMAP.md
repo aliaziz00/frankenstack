@@ -5,6 +5,18 @@ what exists. Not a commitment — pull whichever teaches the concept you
 want to focus on next. Each one should earn a new section in
 [CONCEPTS.md](./CONCEPTS.md) once built.
 
+## Portfolio track (decided)
+
+- **Chat lab (next)** — WebSockets, Postgres history, Redis pub/sub so it
+  stays correct across multiple backend instances. Listed as planned in the
+  lab registry.
+- **Deploy to a single VPS with Docker Compose** — nginx in front of the
+  frontend build and the API, Postgres + Redis as services, TLS. The same
+  box later hosts multiple backend replicas for the chat/load-balancer demos.
+- **Rate limiting before going public** — the create endpoints are open
+  writes; protect them before the URL is shared.
+- **Real About/Projects content** and a diagram per lab.
+
 ## Natural next steps on the URL shortener
 
 - **Caching layer (Redis)** — cache short_code → long_url in front of

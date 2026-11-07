@@ -12,11 +12,9 @@ app.use(express.json());
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 app.use("/api/urls", urlsRouter);
-// Mounted last, at the root: any single-segment path that isn't matched
-// above (/health, /api/*) is treated as a short code lookup. This is what
-// lets short links look like http://host/abc123 instead of
-// http://host/r/abc123.
-app.use("/", redirectRouter);
+// Short links live under /s so the site root stays free for the frontend
+// when everything is served from one domain behind a reverse proxy.
+app.use("/s", redirectRouter);
 
 const port = Number(process.env.PORT ?? 4000);
 app.listen(port, () => {

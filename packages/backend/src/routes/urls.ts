@@ -46,7 +46,7 @@ urlsRouter.post("/", async (req, res) => {
   const baseUrl = process.env.BASE_URL ?? `${req.protocol}://${req.get("host")}`;
   res.status(201).json({
     shortCode,
-    shortUrl: `${baseUrl}/${shortCode}`,
+    shortUrl: `${baseUrl}/s/${shortCode}`,
     longUrl,
     clickCount: 0,
     createdAt: created_at,
