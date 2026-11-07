@@ -74,6 +74,12 @@ The frontend's Vite dev server proxies `/api/*` to the backend (see
 origin. Short links (`GET /s/:code`) are proxied the same way; they live
 under `/s` so the site root stays free for the frontend on a single domain.
 
+Config lives in two gitignored files: the root `.env` (read by Docker Compose
+for the Postgres password) and `packages/backend/.env` (the backend's
+`DATABASE_URL`, `PORT`, `BASE_URL`). Postgres only applies `POSTGRES_PASSWORD`
+when it first creates its data volume, so changing it later means running
+`ALTER USER` inside the container, or recreating the volume.
+
 ## CI
 
 GitHub Actions runs on every pull request into `main` and on every push to
@@ -98,12 +104,6 @@ upstream). Neither blocks CI.
 2. Add an entry to `labs/registry.ts` (summary, concepts, design notes).
 3. Add backend routes under `/api/<slug>` and any schema to `schema.sql`.
 4. Add a section to CONCEPTS.md.
-
-Config lives in two gitignored files: the root `.env` (read by Docker Compose
-for the Postgres password) and `packages/backend/.env` (the backend's
-`DATABASE_URL`, `PORT`, `BASE_URL`). Postgres only applies `POSTGRES_PASSWORD`
-when it first creates its data volume, so changing it later means running
-`ALTER USER` inside the container, or recreating the volume.
 
 ## Feature 1: URL shortener
 
