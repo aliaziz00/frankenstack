@@ -1,5 +1,7 @@
 # 🧟 frankenstack
 
+[![CI](https://github.com/aliaziz00/frankenstack/actions/workflows/ci.yml/badge.svg)](https://github.com/aliaziz00/frankenstack/actions/workflows/ci.yml)
+
 A personal system-design lab and portfolio site: one growing app where each
 system is a self-contained "lab" with a live demo, the requirements it was
 built against, the design trade-offs, and where it breaks first. Each lab is
@@ -71,6 +73,24 @@ The frontend's Vite dev server proxies `/api/*` to the backend (see
 `packages/frontend/vite.config.ts`), so the browser only ever talks to one
 origin. Short links (`GET /s/:code`) are proxied the same way; they live
 under `/s` so the site root stays free for the frontend on a single domain.
+
+## CI
+
+GitHub Actions runs on every pull request into `main` and on every push to
+`main` (see `.github/workflows/ci.yml`):
+
+- **checks:** `npm ci`, then `npm run lint`, `npm run typecheck`, `npm run build`
+- **audit:** `npm audit --audit-level=high` (fails on high or critical advisories only)
+
+Run the same commands locally before opening a PR:
+
+```bash
+npm run lint && npm run typecheck && npm run build
+```
+
+Known, accepted advisories: React Router (moderate; the fix is a breaking v7
+upgrade) and the ESLint toolchain's `minimatch` (moderate, dev-only; waiting on
+upstream). Neither blocks CI.
 
 ## Adding a new system
 
