@@ -11,7 +11,9 @@
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
     "db:migrate": "npm run migrate -w packages/backend",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
