@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { urlsRouter } from "./routes/urls.js";
 import { redirectRouter } from "./routes/redirect.js";
+import { chatRouter } from "./routes/chat.js";
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 app.use("/api/urls", urlsRouter);
+app.use("/api/chat", chatRouter);
 // Short links live under /s so the site root stays free for the frontend
 // when everything is served from one domain behind a reverse proxy.
 app.use("/s", redirectRouter);
