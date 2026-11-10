@@ -34,6 +34,8 @@ src/
   main.tsx             # entry point
   App.tsx              # BrowserRouter and site shell; routes / and /labs/:slug
   App.css, index.css   # styles
+  lib/
+    http.ts            # request(): the shared fetch wrapper every lab's api.ts uses
   components/          # shared components used by more than one page
     ConceptTags.tsx    # the row of concept tags on lab cards and lab pages
     ErrorBoundary.tsx  # catches render errors (a class: React has no hook for this); see D-026
