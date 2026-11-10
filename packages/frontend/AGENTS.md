@@ -33,7 +33,9 @@ You are a React frontend development specialist.
 src/
   main.tsx             # entry point
   App.tsx              # BrowserRouter and site shell; routes / and /labs/:slug
-  App.css, index.css   # styles
+  App.css              # component styles; colours come from the tokens
+  index.css            # global base and the colour tokens (light + dark)
+  tokens.test.ts       # checks the tokens' contrast and that App.css uses only tokens
   lib/
     http.ts            # request(): the shared fetch wrapper every lab's api.ts uses
   components/          # shared components used by more than one page
@@ -59,7 +61,9 @@ LabPage render from the registry, so they don't change.
 - Use consistent spacing and typography
 - Implement responsive design from the start
 - Follow accessibility best practices
-- Use CSS custom properties for theming
+- Use CSS custom properties for theming. Every colour in `App.css` is a token defined in `src/index.css`: light values on `:root`, with a `prefers-color-scheme: dark` block that overrides only what must differ. The page follows the system setting; there is no manual toggle. The one literal allowed in `App.css` is `white` as button text on `var(--accent)`.
+- Colours must meet WCAG AA: 4.5:1 for text and 3:1 for the edge of a form control, against the real page background (`#ffffff` light, `#121212` dark), in both schemes. Muted text uses `opacity`, which is fine (all current values pass); use `--border` only for decorative edges and `--border-strong` for controls.
+- Change a palette value together with `src/tokens.test.ts`, which reads the tokens and fails if a contrast target is missed, a token is undefined, or a hard-coded colour appears in `App.css`. Measure real rendered colours in the browser in both schemes (emulate the colour scheme) rather than trusting the numbers.
 
 ## Performance
 - Lazy load components when appropriate

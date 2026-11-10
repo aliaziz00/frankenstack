@@ -20,7 +20,7 @@
   padding: 0.6rem 0.8rem;
   font-size: 1rem;
   border-radius: 6px;
-  border: 1px solid #8884;
+  border: 1px solid var(--border-strong);
 }
 
 .shorten-form button {
@@ -28,7 +28,7 @@
   font-size: 1rem;
   border-radius: 6px;
   border: none;
-  background: #6366f1;
+  background: var(--accent);
   color: white;
   cursor: pointer;
 }
@@ -39,12 +39,12 @@
 }
 
 .error {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 .error-boundary {
   padding: 1rem 1.2rem;
-  border: 1px solid #ef444466;
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
   border-radius: 8px;
 }
 
@@ -57,7 +57,7 @@
   font-size: 0.95rem;
   border-radius: 6px;
   border: none;
-  background: #6366f1;
+  background: var(--accent);
   color: white;
   cursor: pointer;
 }
@@ -76,7 +76,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.6rem 0.8rem;
-  border: 1px solid #8883;
+  border: 1px solid var(--border);
   border-radius: 6px;
   /* Flex items default to min-width: auto, meaning a child won't shrink
      past its own content's natural width -- so .long-url's ellipsis below
@@ -94,7 +94,7 @@
 
 .link-list a {
   font-weight: 600;
-  color: #6366f1;
+  color: var(--link);
   white-space: nowrap;
 }
 
@@ -114,7 +114,7 @@
 }
 
 a {
-  color: #6366f1;
+  color: var(--link);
 }
 
 .nav {
@@ -149,14 +149,14 @@ a {
 .lab-card {
   display: block;
   padding: 1rem 1.2rem;
-  border: 1px solid #8883;
+  border: 1px solid var(--border);
   border-radius: 8px;
   text-decoration: none;
   color: inherit;
 }
 
 .lab-card:hover {
-  border-color: #6366f1;
+  border-color: var(--accent);
 }
 
 .lab-card-head {
@@ -180,12 +180,12 @@ a {
   font-size: 0.75rem;
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid #8884;
+  border: 1px solid var(--border);
 }
 
 .badge.live {
-  color: #22c55e;
-  border-color: #22c55e66;
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
 }
 
 .tags {
@@ -201,7 +201,7 @@ a {
   font-size: 0.78rem;
   padding: 0.15rem 0.55rem;
   border-radius: 4px;
-  background: #8882;
+  background: var(--surface);
 }
 
 .back {
