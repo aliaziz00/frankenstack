@@ -5,6 +5,7 @@ import { redirectRouter } from "./routes/redirect.js";
 import { chatRouter } from "./routes/chat.js";
 import { attachChatSocket } from "./chat/socket.js";
 import { config } from "./config.js";
+import { pool } from "./db/pool.js";
 
 const app = express();
 
@@ -51,8 +52,57 @@ app.use(errorHandler);
 // app.listen() would create the HTTP server for us, but we need a handle on
 // it so the WebSocket layer can listen for upgrade requests on the same port.
 const server = createServer(app);
-attachChatSocket(server);
+const wss = attachChatSocket(server);
 
 server.listen(config.port, () => {
   console.log(`backend listening on http://localhost:${config.port}`);
 });
+
+// Graceful shutdown (D-024). `docker stop` and most deploy tools send
+// SIGTERM, then SIGKILL after a grace period (Docker's default is 10 s);
+// Ctrl-C sends SIGINT. Without handlers the process dies instantly: requests
+// in flight are cut off, WebSocket clients just see the connection drop, and
+// database connections are abandoned.
+const SHUTDOWN_TIMEOUT_MS = 10_000;
+let shuttingDown = false;
+
+function shutdown(signal: string) {
+  // A second signal while we are already shutting down is ignored.
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`${signal} received, shutting down`);
+
+  // Safety net: if a connection refuses to close, exit anyway rather than
+  // hanging until the platform sends SIGKILL. unref() so the timer itself
+  // never keeps the process alive.
+  setTimeout(() => {
+    console.error("shutdown timed out, forcing exit");
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS).unref();
+
+  // 1. Stop accepting new connections. The callback runs once every
+  //    existing connection has ended, i.e. in-flight requests have finished
+  //    and the WebSocket clients below have closed.
+  server.close(async () => {
+    try {
+      // 3. Close the pool last: requests that were still running needed it.
+      await pool.end();
+      console.log("shutdown complete");
+      process.exit(0);
+    } catch (err) {
+      console.error("error closing the database pool:", err);
+      process.exit(1);
+    }
+  });
+
+  // 2. Close WebSocket clients with 1001 ("going away"). Upgraded sockets
+  //    count as open connections, so server.close() would wait on them
+  //    forever. The code also tells clients this was a restart, not a crash,
+  //    so they know to reconnect.
+  for (const client of wss.clients) {
+    client.close(1001, "server shutting down");
+  }
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

@@ -293,3 +293,17 @@ Platform · Decided
 **Why:** Fails fast with a pointer to the cause, and gives one place to see every setting.
 
 **Not covered here:** whether `DATABASE_URL` is actually reachable. That is a readiness question (see the health check decision).
+
+### D-024 Graceful shutdown
+Platform · Decided
+
+**Options**
+- **Handle SIGTERM and SIGINT (chosen):** stop accepting connections, close WebSocket clients with code 1001, let in-flight requests finish, close the database pool last, then exit 0. A 10-second timeout forces exit 1 if something refuses to close. This is what deploys, `docker stop` and rolling restarts expect, and clients can tell a restart (1001) from a crash, which matters for reconnect logic. Cost: more code and an order to get right.
+- **Leave it (the original state):** the process dies instantly on a signal. Requests in flight are cut off, WebSocket clients see an abrupt drop, and database connections are abandoned until Postgres times them out.
+
+**Decision:** Graceful shutdown in `index.ts`, with a 10-second timeout.
+**Why:** 10 seconds matches the default grace period of `docker stop` (after which the platform sends SIGKILL anyway), so we always finish or exit on our own terms first. A shorter timeout risks cutting off slow requests; a longer one just waits for the platform to kill us.
+
+**Order matters:** (1) stop accepting new connections, (2) close the WebSockets (upgraded sockets count as open connections, so `server.close()` would wait on them forever), (3) close the pool only after in-flight requests are done, since they may still need it.
+
+**Known limits:** a second signal during shutdown is ignored. Behavior with a long-running in-flight HTTP request is not tested (no slow route exists yet); the timeout is the safety net.
