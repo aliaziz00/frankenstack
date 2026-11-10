@@ -14,7 +14,56 @@ const app = express();
 // cross-origin access is not needed and is not enabled.
 app.use(express.json());
 
+// Set by shutdown() further down. Declared here because the readiness probe
+// below needs to read it.
+let shuttingDown = false;
+
+// Health checks (D-025). Two endpoints because they answer different
+// questions, and platforms react to them differently:
+//   /health        liveness: "is the process running?" Deliberately checks
+//                  nothing else. If this fails the platform RESTARTS us, and
+//                  restarting does not fix a database outage.
+//   /health/ready  readiness: "can this instance serve traffic?" If this fails
+//                  the platform stops routing to us but leaves us running.
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+const READINESS_TIMEOUT_MS = 2_000;
+
+app.get("/health/ready", async (_req, res) => {
+  // Fail readiness once shutdown has started. Known limit (D-025): shutdown()
+  // calls server.close() immediately, which refuses new connections and closes
+  // idle keep-alive ones, so in practice this branch is rarely reached. It only
+  // becomes a real "drain" signal if shutdown waits a few seconds, still
+  // serving, between flipping this flag and calling server.close().
+  if (shuttingDown) {
+    return res
+      .status(503)
+      .json({ status: "unavailable", checks: { server: "shutting down" } });
+  }
+
+  // pg has no per-query timeout, so race the query against a timer: an
+  // unreachable database must produce a fast 503, not a probe that hangs.
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    await Promise.race([
+      pool.query("select 1"),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`no response within ${READINESS_TIMEOUT_MS} ms`)),
+          READINESS_TIMEOUT_MS,
+        );
+      }),
+    ]);
+    res.json({ status: "ok" });
+  } catch (err) {
+    // The real error goes to the log only: connection errors can contain
+    // hostnames or credentials, so clients get a fixed body.
+    console.error("readiness check failed:", err);
+    res.status(503).json({ status: "unavailable", checks: { database: "down" } });
+  } finally {
+    clearTimeout(timer);
+  }
+});
 
 app.use("/api/urls", urlsRouter);
 app.use("/api/chat", chatRouter);
@@ -64,7 +113,6 @@ server.listen(config.port, () => {
 // in flight are cut off, WebSocket clients just see the connection drop, and
 // database connections are abandoned.
 const SHUTDOWN_TIMEOUT_MS = 10_000;
-let shuttingDown = false;
 
 function shutdown(signal: string) {
   // A second signal while we are already shutting down is ignored.

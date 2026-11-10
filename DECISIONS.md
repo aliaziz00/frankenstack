@@ -307,3 +307,22 @@ Platform · Decided
 **Order matters:** (1) stop accepting new connections, (2) close the WebSockets (upgraded sockets count as open connections, so `server.close()` would wait on them forever), (3) close the pool only after in-flight requests are done, since they may still need it.
 
 **Known limits:** a second signal during shutdown is ignored. Behavior with a long-running in-flight HTTP request is not tested (no slow route exists yet); the timeout is the safety net.
+
+### D-025 Health checks: separate liveness and readiness
+Platform · Decided
+
+**Options**
+- **Two endpoints (chosen):** `GET /health` is liveness and checks nothing but the process. `GET /health/ready` is readiness: `select 1` on a pool connection, raced against a 2-second timer, returning `503` with `{ "status": "unavailable", "checks": { "database": "down" } }` on failure. Each probe has one meaning, and platforms react differently to each: a failed liveness check restarts the process, a failed readiness check only takes it out of rotation. Cost: two endpoints to maintain.
+- **One shallow `/health` (the original state):** always `ok` while Node runs, so a deploy can go green with a dead database connection.
+- **One `/health` that checks the database:** reports real problems, but used as a liveness probe a database outage makes the platform restart the app repeatedly (a restart does not fix Postgres) and can cascade across instances.
+
+**Decision:** Two endpoints; `/health` stays as liveness so existing callers do not break.
+**Why:** Liveness and readiness are different questions with different remedies.
+
+**Details:**
+- `pg` has no per-query timeout (only client-wide settings), so the check races the query against a timer. Verified against a "database" that accepts connections and never answers: `503` in 2.0 s, liveness unaffected. A stopped database refuses instantly and also gives `503`, and readiness recovers on its own when the database returns.
+- The real error goes to the server log only (connection errors can contain hostnames or credentials); clients get a fixed body.
+
+**Known limit:** readiness also returns `503` once shutdown starts (D-024), but `shutdown()` calls `server.close()` straight away, which refuses new connections and closes idle keep-alive ones. Tested: a keep-alive connection opened before the signal got no second response. So the branch is rarely reached. It only becomes a real drain signal if shutdown waits a few seconds, still serving, between flipping the flag and closing the server (the Kubernetes "preStop sleep" pattern). Not implemented, since there is no load balancer yet.
+
+**Also observed:** with a database that never answers, `pool.end()` waits on the stuck connection, so shutdown ends via the 10-second timeout with exit 1 (D-024's safety net doing its job).
