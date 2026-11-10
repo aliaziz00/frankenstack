@@ -2,7 +2,7 @@ import { Router } from "express";
 import { config } from "../config.js";
 import { pool } from "../db/pool.js";
 import { toBase62 } from "../lib/base62.js";
-import { isValidHttpUrl, MAX_URL_LENGTH } from "../lib/url.js";
+import { MAX_URL_LENGTH, normalizeLongUrl } from "../lib/url.js";
 
 export const urlsRouter = Router();
 
@@ -27,9 +27,11 @@ function toShortLink(row: UrlRow) {
 
 // POST /api/urls  { longUrl } -> create a short link
 urlsRouter.post("/", async (req, res) => {
-  const { longUrl } = req.body ?? {};
+  // Trimmed and validated, or null (D-027). What is stored and returned below
+  // is this cleaned string, never the raw input.
+  const longUrl = normalizeLongUrl(req.body?.longUrl);
 
-  if (typeof longUrl !== "string" || !isValidHttpUrl(longUrl)) {
+  if (longUrl === null) {
     return res.status(400).json({ error: "longUrl must be a valid http(s) URL" });
   }
   if (longUrl.length > MAX_URL_LENGTH) {

@@ -349,3 +349,21 @@ Frontend · Decided
 **Why the boundary is keyed by `pathname`:** a boundary that caught an error keeps showing its fallback until reset, so without the key, navigating away from a crashed page would still show the error. Tested: with Home crashed, navigating to a lab page renders it normally.
 
 **Not caught by boundaries:** errors in event handlers and async code (a rejected `fetch`, `setTimeout`) and in the boundary itself. The demo's API calls already handle their own errors with `try/catch` and state.
+
+### D-027 Normalising submitted URLs: trim, then reject stray whitespace
+URL shortener · Decided
+
+**The bug that prompted it.** `new URL()` is lenient: it trims surrounding whitespace and silently removes tabs and newlines anywhere in the string. The original `isValidHttpUrl` accepted anything it parsed, but the route stored the *original* string. Reproduced end to end: `" https://example.com/x \n"` was stored as typed, and the redirect sent `Location: %20https://example.com/x%20%0A`, which a browser resolves as a relative path on the site itself, so the short link went to the wrong place.
+
+**Options**
+- **Trim, then reject whitespace and control characters (chosen):** surrounding whitespace is trimmed (a pasted URL with a trailing newline just works); anything with whitespace or control characters left inside is rejected with the existing 400. Trimming alone is not enough, because tabs and newlines inside the string also pass `new URL()`. The URL is stored as typed after the trim.
+- **Store the parsed `url.href`:** always a clean, canonical absolute URL, and it would also dedupe cosmetic variants. But it changes what is stored (`https://example.com` becomes `https://example.com/`, the host is lowercased, internationalised domains become punycode) and the length limit would apply to a different string than the one the user typed.
+- **Reject any whitespace:** the strictest and simplest rule, but a URL pasted with a trailing newline would fail with an error.
+- **Leave it:** broken redirects stay possible.
+
+**Decision:** `normalizeLongUrl` in `lib/url.ts`: trim, reject anything matching whitespace (including Unicode spaces such as U+00A0), C0 control characters or DEL, then require an absolute http(s) URL. `isValidHttpUrl` is strict on its own. The route stores and returns the cleaned string.
+**Why:** It fixes the broken redirect, keeps the friendly pasted-URL case working, and leaves stored URLs exactly as the user wrote them.
+
+**Verified:** the padded URL is now stored clean and redirects to the right place; embedded whitespace and control characters get a 400; 122 unit tests, mutation-checked (nine isolated mutations, none survived).
+
+**Known limits:** other lenient `new URL()` forms are still accepted and stored as typed (e.g. `http:/example.com`, which browsers normalise to `http://example.com/`). Invisible non-whitespace characters such as zero-width spaces are not rejected. The browser's `type="url"` input already trims whitespace, so the demo never sent the bad case; this protects every other client.
