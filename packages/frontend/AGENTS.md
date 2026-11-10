@@ -68,8 +68,9 @@ LabPage render from the registry, so they don't change.
 - Implement proper error boundaries
 
 ## Testing
-- Use Vitest as the test runner (not yet installed or configured)
-- Write unit tests for utility functions
+- Vitest is the test runner (`npm test`, or `npm run test:watch`). Tests sit next to the code as `*.test.ts` and import `describe`/`it`/`expect` explicitly (no globals). They run in a Node environment for now; jsdom and React Testing Library are added with the first component test.
+- Write unit tests for utility functions. Covered so far: `lib/http.ts` (`request()`).
 - Test component behavior, not implementation
-- Use React Testing Library for component tests
-- Mock external dependencies appropriately
+- Use React Testing Library for component tests (not yet installed)
+- Mock external dependencies appropriately: replace `fetch` with `vi.stubGlobal` and restore it with `vi.unstubAllGlobals()` in `afterEach`.
+- Expected values in a test must come from an independent source (a hand calculation, another tool), never from the function under test. Check that a new test can fail by breaking the code on purpose, applying each mutation in isolation and restoring the file afterwards.
