@@ -12,9 +12,18 @@ export default function Demo() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    listShortLinks()
+    // Cancel the request if the component unmounts first (and in development,
+    // where React StrictMode runs this effect twice, the first run).
+    const controller = new AbortController();
+    listShortLinks(controller.signal)
       .then(setLinks)
-      .catch((err) => setError(errorMessage(err)));
+      .catch((err) => {
+        // Aborting rejects with an AbortError. That is us cancelling on
+        // purpose, not a failure to show the user.
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setError(errorMessage(err));
+      });
+    return () => controller.abort();
   }, []);
 
   async function handleSubmit(event: FormEvent) {
