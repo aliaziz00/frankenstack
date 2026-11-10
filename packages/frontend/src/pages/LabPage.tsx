@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Link, useParams } from "react-router-dom";
+import ConceptTags from "../components/ConceptTags";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { findLab } from "../labs/registry";
 
@@ -26,11 +27,7 @@ export default function LabPage() {
       <header>
         <h1>{lab.title}</h1>
         <p className="subtitle">{lab.summary}</p>
-        <ul className="tags">
-          {lab.concepts.map((concept) => (
-            <li key={concept}>{concept}</li>
-          ))}
-        </ul>
+        <ConceptTags concepts={lab.concepts} />
       </header>
 
       <section>
