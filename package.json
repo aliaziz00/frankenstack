@@ -16,6 +16,7 @@
     "db:migrate": "npm run migrate -w packages/backend",
     "lint": "eslint .",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {

@@ -79,8 +79,10 @@ Each lab's HTTP routes live under `/api/<slug>` and its tables use a
 - **Connection Pooling**: Implement connection pooling for performance. *Built.* One shared pool (D-008).
 
 ## Testing strategy
-- Use Vitest as the test runner (not yet installed or configured), matching the frontend.
-- **Unit Tests**: Test individual functions and methods. *Not built.*
+- Vitest is the test runner (`npm test`, or `npm run test:watch`). Tests sit next to the code as `*.test.ts`, import `describe`/`it`/`expect` explicitly (no globals), and use `.js` extensions on relative imports like all backend code. `tsconfig.build.json` keeps them out of `dist/`; `npm run typecheck` still checks them.
+- Expected values in a test must come from an independent source (a hand calculation, another tool), never from the function under test. Check that a new test can fail by breaking the code on purpose.
+- Keep logic that needs testing in modules that do not import `db/pool` (it pulls in `config.ts`, which exits without `DATABASE_URL`).
+- **Unit Tests**: Test individual functions and methods. *Partly.* `lib/base62.ts` is covered; the protocol parser, query parsers and URL validation are next.
 - **Integration Tests**: Test API endpoints end-to-end. *Not built.*
 - **Database Tests**: Test database operations. *Not built.*
 - **Mock External Services**: Mock third-party API calls. *Not built.* There are no external services yet.
