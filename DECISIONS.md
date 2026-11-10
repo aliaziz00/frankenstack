@@ -221,3 +221,16 @@ Chat · Decided
 
 **Decision:** Numbers everywhere, with the limit noted in the code.
 **Why:** Simplicity, with the production alternative understood. A production system would use strings.
+
+### D-019 WebSocket message format: typed envelope
+Chat · Decided
+
+**Options**
+- **Envelope `{ type, payload }` (chosen):** one connection carries every event type, so adding typing or presence later is a new `type`, not a new structure. One place to validate (check `type`, then that type's payload), and a clean TypeScript discriminated union. Matches Discord's gateway and Slack's events. Cost: one extra nesting level, and the payload must be checked against its type.
+- **One socket per channel (`/ws/channels/1`):** the URL carries the routing, so no `join` is needed, but a user in 10 channels holds 10 connections (server memory, browser per-host limits), and non-message events have nowhere to go.
+- **Flat objects with an `action` field:** slightly less nesting, but routing fields and data share one namespace, and it degrades into an envelope without the structure as events are added.
+
+**Decision:** Envelope, JSON text frames. Client to server: `join`, `leave`, `send`. Server to client: `message`, `error`.
+**Why:** Keeps one connection per user and leaves room for more event types.
+
+**At larger scale (not built):** binary schema'd encoding (Protobuf) with versioning for old clients, compression, per-user inbox subscriptions with multi-device fan-out, acks and sequence numbers for reliable delivery, push notifications for offline users, end-to-end encrypted payloads, and separating droppable events (typing, presence) from durable messages. The harder scaling problem is routing a message to whichever server holds the recipient's socket (shared pub/sub), not the format.
