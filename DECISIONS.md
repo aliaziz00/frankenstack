@@ -254,3 +254,16 @@ Platform · Decided
 **Still needed:** Express 5's default error responses are HTML, and outside production they include the stack trace and server file paths. A malformed JSON body also gets an HTML `400`. A central error middleware that returns the API's `{ "error": "…" }` shape (and logs real errors server-side only) is the next step.
 
 **Error handler choices (recorded with the upgrade):** the central handler passes through a 4xx `status` that an error carries (so a malformed JSON body stays `400` and an oversized one `413`), and treats everything else as `500`. A `500` replies with a generic `{ "error": "internal server error" }` and logs the real error server-side only, so SQL text, file paths and stack traces never reach clients. Unknown routes get a JSON `404`. Express's defaults were rejected because they reply with HTML and, outside production, expose stack traces.
+
+### D-021 No CORS: single origin
+Platform · Decided
+
+**Options**
+- **Remove CORS (chosen):** the browser only ever talks to one origin (the Vite dev proxy locally, a reverse proxy in production, per D-002), so cross-origin access isn't needed. Smallest attack surface, and one less dependency. Cost: a browser page on a different origin cannot call the API, so a split-domain deployment would need CORS added back.
+- **Allowlist from an env var (`CORS_ORIGINS`):** the usual production answer when the frontend lives on its own domain; restrictive and flexible, but more configuration and one more value to validate.
+- **Keep `cors()` open (`*`):** nothing to do, and low risk while there is no login, but any website can make a visitor's browser call the API, and it becomes unsafe once credentials are involved.
+
+**Decision:** No CORS middleware; `cors` and `@types/cors` removed.
+**Why:** It matches D-002 and the code's actual behavior. CORS is enforced by browsers only (curl and Postman ignore it), so the old "for curl/Postman use" comment was wrong.
+
+**Related, not covered by CORS:** WebSocket handshakes ignore CORS. Browsers send an `Origin` header on the upgrade, but nothing enforces it, so the server has to check it (cross-site WebSocket hijacking). Low impact with no auth; to be decided with the connection logic.

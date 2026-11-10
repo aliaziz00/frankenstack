@@ -19,7 +19,7 @@ You are a backend API development specialist.
 - Express 4 for the HTTP API
 - PostgreSQL 16 (Docker Compose) through the `pg` driver and one shared `Pool`
 - `ws` for WebSockets, attached to the same HTTP server at `/ws`
-- `dotenv` for config (`packages/backend/.env`, gitignored), `cors`
+- `dotenv` for config (`packages/backend/.env`, gitignored). No CORS middleware: the app is single-origin by design (D-002, D-021)
 - `tsx watch` for development, `tsc` for the production build
 - Vitest for tests (see Testing strategy)
 

@@ -1,7 +1,6 @@
 import "dotenv/config";
 import { createServer } from "node:http";
 import express, { type ErrorRequestHandler } from "express";
-import cors from "cors";
 import { urlsRouter } from "./routes/urls.js";
 import { redirectRouter } from "./routes/redirect.js";
 import { chatRouter } from "./routes/chat.js";
@@ -9,7 +8,9 @@ import { attachChatSocket } from "./chat/socket.js";
 
 const app = express();
 
-app.use(cors());
+// No CORS middleware on purpose (D-021): the browser only ever talks to one
+// origin (the Vite dev proxy, or a reverse proxy in production), so
+// cross-origin access is not needed and is not enabled.
 app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
