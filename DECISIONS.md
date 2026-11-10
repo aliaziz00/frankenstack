@@ -267,3 +267,16 @@ Platform · Decided
 **Why:** It matches D-002 and the code's actual behavior. CORS is enforced by browsers only (curl and Postman ignore it), so the old "for curl/Postman use" comment was wrong.
 
 **Related, not covered by CORS:** WebSocket handshakes ignore CORS. Browsers send an `Origin` header on the upgrade, but nothing enforces it, so the server has to check it (cross-site WebSocket hijacking). Low impact with no auth; to be decided with the connection logic.
+
+### D-022 Maximum URL length: 2048 characters
+URL shortener · Decided
+
+**Options**
+- **2048 characters (chosen):** the de-facto practical ceiling for URLs; browsers, CDNs and many servers reject or truncate anything longer, so a longer stored URL often would not work when redirected to anyway.
+- **8192 characters:** roomier and in line with common web-server limits, but more storage per row and more data in every list response.
+- **No limit:** only the 100 KB JSON body cap applies, so a client can store a 100 KB URL that is then served back in every list response.
+
+**Decision:** 2048, checked in the API (`POST /api/urls` returns `400` above it).
+**Why:** It bounds row size and response size at the edge with a number that matches real-world URL limits.
+
+**Open:** whether to add a matching database `CHECK` as a backstop, as chat message length has. Until then only the API enforces it.

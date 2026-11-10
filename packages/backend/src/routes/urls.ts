@@ -23,6 +23,12 @@ function toShortLink(row: UrlRow) {
   };
 }
 
+// 2048 is the de-facto practical ceiling for URLs: browsers, CDNs and many
+// servers reject or truncate anything longer (see D-022). Without a cap, the
+// only limit is the 100 KB JSON body parser, and a stored URL is served back
+// in every list response.
+const MAX_URL_LENGTH = 2048;
+
 function isValidHttpUrl(value: string): boolean {
   try {
     const url = new URL(value);
@@ -40,6 +46,11 @@ urlsRouter.post("/", async (req, res) => {
 
   if (typeof longUrl !== "string" || !isValidHttpUrl(longUrl)) {
     return res.status(400).json({ error: "longUrl must be a valid http(s) URL" });
+  }
+  if (longUrl.length > MAX_URL_LENGTH) {
+    return res
+      .status(400)
+      .json({ error: `longUrl must be at most ${MAX_URL_LENGTH} characters` });
   }
 
   // Pull the next id straight from the table's sequence, then encode it and
