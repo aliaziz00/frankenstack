@@ -1,53 +1,13 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { createShortLink, listShortLinks, type ShortLink } from "./api";
-
-function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : "Something went wrong";
-}
+import { useState, type FormEvent } from "react";
+import { useShortLinks } from "./useShortLinks";
 
 export default function Demo() {
   const [longUrl, setLongUrl] = useState("");
-  const [links, setLinks] = useState<ShortLink[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  // True until the first response (or error) arrives. Without it the empty
-  // list looks identical to "nothing loaded yet" and the page briefly claims
-  // "No links yet." while the request is still in flight.
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Cancel the request if the component unmounts first (and in development,
-    // where React StrictMode runs this effect twice, the first run).
-    const controller = new AbortController();
-    listShortLinks(controller.signal)
-      .then((loaded) => {
-        setLinks(loaded);
-        setLoading(false);
-      })
-      .catch((err) => {
-        // Aborting rejects with an AbortError. That is us cancelling on
-        // purpose, not a failure to show the user. Do not clear `loading`
-        // here either: under StrictMode another request is already in flight.
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        setError(errorMessage(err));
-        setLoading(false);
-      });
-    return () => controller.abort();
-  }, []);
+  const { links, loading, error, submitting, create } = useShortLinks();
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-    setSubmitting(true);
-    try {
-      const created = await createShortLink(longUrl);
-      setLinks((prev) => [created, ...prev]);
-      setLongUrl("");
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
+    if (await create(longUrl)) setLongUrl("");
   }
 
   return (

@@ -44,7 +44,8 @@ src/
     registry.ts        # one entry per system: metadata and design notes
     types.ts           # the Lab type
     <slug>/            # one folder per lab, e.g. url-shortener/
-      Demo.tsx         # the live demo, lazy-loaded from the registry
+      Demo.tsx         # the live demo, lazy-loaded from the registry; renders only
+      use<Name>.ts     # that lab's data hook (e.g. useShortLinks): state and API calls
       api.ts           # that lab's API client
 ```
 
