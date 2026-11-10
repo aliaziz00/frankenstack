@@ -2,6 +2,7 @@ import { Router } from "express";
 import { config } from "../config.js";
 import { pool } from "../db/pool.js";
 import { toBase62 } from "../lib/base62.js";
+import { isValidHttpUrl, MAX_URL_LENGTH } from "../lib/url.js";
 
 export const urlsRouter = Router();
 
@@ -22,23 +23,6 @@ function toShortLink(row: UrlRow) {
     clickCount: Number(row.click_count),
     createdAt: row.created_at,
   };
-}
-
-// 2048 is the de-facto practical ceiling for URLs: browsers, CDNs and many
-// servers reject or truncate anything longer (see D-022). Without a cap, the
-// only limit is the 100 KB JSON body parser, and a stored URL is served back
-// in every list response.
-const MAX_URL_LENGTH = 2048;
-
-function isValidHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    // Restrict to http(s) so nobody can store a `javascript:` or `data:`
-    // URL that we then happily redirect a browser to.
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
 }
 
 // POST /api/urls  { longUrl } -> create a short link

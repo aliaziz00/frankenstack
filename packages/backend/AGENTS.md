@@ -35,11 +35,12 @@ src/
   chat/              # the chat WebSocket layer
     socket.ts        # /ws upgrade handling and connections
     protocol.ts      # message types and frame validation
+    params.ts        # query-string parsing for the messages route (DB-free, unit tested)
   db/
     pool.ts          # the shared pg Pool
     schema.sql       # idempotent schema, all labs
     migrate.ts       # applies schema.sql
-  lib/               # pure helpers, e.g. base62.ts
+  lib/               # pure helpers: base62.ts (ids), url.ts (URL validation and length limit)
 ```
 
 Each lab's HTTP routes live under `/api/<slug>` and its tables use a
@@ -82,7 +83,7 @@ Each lab's HTTP routes live under `/api/<slug>` and its tables use a
 - Vitest is the test runner (`npm test`, or `npm run test:watch`). Tests sit next to the code as `*.test.ts`, import `describe`/`it`/`expect` explicitly (no globals), and use `.js` extensions on relative imports like all backend code. `tsconfig.build.json` keeps them out of `dist/`; `npm run typecheck` still checks them.
 - Expected values in a test must come from an independent source (a hand calculation, another tool), never from the function under test. Check that a new test can fail by breaking the code on purpose.
 - Keep logic that needs testing in modules that do not import `db/pool` (it pulls in `config.ts`, which exits without `DATABASE_URL`).
-- **Unit Tests**: Test individual functions and methods. *Partly.* `lib/base62.ts` is covered; the protocol parser, query parsers and URL validation are next.
+- **Unit Tests**: Test individual functions and methods. *Partly.* Covered: `lib/base62.ts`, `lib/url.ts`, `chat/protocol.ts` and `chat/params.ts`. Not covered: routes and anything that touches the database (see Integration Tests and Database Tests).
 - **Integration Tests**: Test API endpoints end-to-end. *Not built.*
 - **Database Tests**: Test database operations. *Not built.*
 - **Mock External Services**: Mock third-party API calls. *Not built.* There are no external services yet.
