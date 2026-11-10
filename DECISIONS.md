@@ -279,4 +279,4 @@ URL shortener · Decided
 **Decision:** 2048, checked in the API (`POST /api/urls` returns `400` above it).
 **Why:** It bounds row size and response size at the edge with a number that matches real-world URL limits.
 
-**Open:** whether to add a matching database `CHECK` as a backstop, as chat message length has. Until then only the API enforces it.
+**Database backstop (decided: none):** no matching `CHECK` on `urls.long_url`, unlike chat message length. Only the API enforces the limit. Trade-off: anything that bypasses the API (a script, a future route, a manual `INSERT`) can store a longer URL. Adding the constraint later needs a guarded `alter table` in `schema.sql`, since there is no migration tool.
