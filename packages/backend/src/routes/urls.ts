@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { config } from "../config.js";
 import { pool } from "../db/pool.js";
 import { toBase62 } from "../lib/base62.js";
 
@@ -73,7 +74,7 @@ urlsRouter.post("/", async (req, res) => {
   );
   const { created_at } = insertResult.rows[0];
 
-  const baseUrl = process.env.BASE_URL ?? `${req.protocol}://${req.get("host")}`;
+  const baseUrl = config.baseUrl ?? `${req.protocol}://${req.get("host")}`;
   res.status(201).json({
     shortCode,
     shortUrl: `${baseUrl}/s/${shortCode}`,

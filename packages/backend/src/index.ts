@@ -1,10 +1,10 @@
-import "dotenv/config";
 import { createServer } from "node:http";
 import express, { type ErrorRequestHandler } from "express";
 import { urlsRouter } from "./routes/urls.js";
 import { redirectRouter } from "./routes/redirect.js";
 import { chatRouter } from "./routes/chat.js";
 import { attachChatSocket } from "./chat/socket.js";
+import { config } from "./config.js";
 
 const app = express();
 
@@ -53,7 +53,6 @@ app.use(errorHandler);
 const server = createServer(app);
 attachChatSocket(server);
 
-const port = Number(process.env.PORT ?? 4000);
-server.listen(port, () => {
-  console.log(`backend listening on http://localhost:${port}`);
+server.listen(config.port, () => {
+  console.log(`backend listening on http://localhost:${config.port}`);
 });

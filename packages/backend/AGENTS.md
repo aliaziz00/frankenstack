@@ -27,6 +27,7 @@ You are a backend API development specialist.
 ```
 src/
   index.ts           # entry: Express app, route mounting, HTTP server, WebSocket attach
+  config.ts          # the only place environment variables are read; validated at startup (D-023)
   routes/            # one file per resource, each exporting a Router
     urls.ts          # /api/urls (URL shortener)
     redirect.ts      # /s/:code (redirect and click count)

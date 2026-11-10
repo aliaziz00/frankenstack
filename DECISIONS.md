@@ -280,3 +280,16 @@ URL shortener · Decided
 **Why:** It bounds row size and response size at the edge with a number that matches real-world URL limits.
 
 **Database backstop (decided: none):** no matching `CHECK` on `urls.long_url`, unlike chat message length. Only the API enforces the limit. Trade-off: anything that bypasses the API (a script, a future route, a manual `INSERT`) can store a longer URL. Adding the constraint later needs a guarded `alter table` in `schema.sql`, since there is no migration tool.
+
+### D-023 Validate configuration at startup
+Platform · Decided
+
+**Options**
+- **One `config.ts` that validates at boot and exits (chosen):** all environment variables are read in one place; a missing or invalid value prints a clear message and exits with code 1. This is the 12-factor approach: config comes from the environment, and a bad deploy fails immediately and visibly. Cost: one more module, and `process.exit` at import time, which makes the module awkward to unit test.
+- **Check inline in `index.ts`:** no new file, but the reads stay scattered, and the chat work will add more settings.
+- **Leave it (the original state):** `DATABASE_URL` was read in `pool.ts`, `PORT` in `index.ts` and `BASE_URL` in a route. With `DATABASE_URL` unset the server started "healthy" and failed on every request with a confusing error.
+
+**Decision:** `src/config.ts`. `DATABASE_URL` is required (blank counts as missing), `PORT` must be an integer from 1 to 65535 (default 4000), and `BASE_URL` stays optional.
+**Why:** Fails fast with a pointer to the cause, and gives one place to see every setting.
+
+**Not covered here:** whether `DATABASE_URL` is actually reachable. That is a readiness question (see the health check decision).

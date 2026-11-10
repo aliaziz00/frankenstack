@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { config } from "../config.js";
 
 // A connection pool, not one connection per request: opening a Postgres
 // connection is relatively expensive (TCP + TLS + auth handshake), so we
@@ -6,7 +7,7 @@ import { Pool } from "pg";
 // request needs one. This is the same idea behind connection pooling in
 // every backend framework/ORM you'll meet later.
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: config.databaseUrl,
 });
 
 pool.on("error", (err) => {
