@@ -367,3 +367,21 @@ URL shortener · Decided
 **Verified:** the padded URL is now stored clean and redirects to the right place; embedded whitespace and control characters get a 400; 122 unit tests, mutation-checked (nine isolated mutations, none survived).
 
 **Known limits:** other lenient `new URL()` forms are still accepted and stored as typed (e.g. `http:/example.com`, which browsers normalise to `http://example.com/`). Invisible non-whitespace characters such as zero-width spaces are not rejected. The browser's `type="url"` input already trims whitespace, so the demo never sent the bad case; this protects every other client.
+
+### D-028 WebSocket errors: reply and keep the connection
+Chat · Decided
+
+**Options (what to do with a bad frame, including a binary one)**
+- **Reply with an `error` message and keep the connection (chosen):** a typo, a missing field or a binary frame is a mistake, not an attack. The client is told what was wrong and carries on, and one client bug does not end the whole session. Cost: a misbehaving client can keep sending bad frames; that is a rate-limiting question (see ROADMAP), not a framing one.
+- **Close the connection with code 1003 ("unsupported data") for binary frames:** stricter and arguably more correct for a protocol that only speaks text, but it penalises a client for a single mistake.
+
+**Options (the shape of the error)**
+- **`{ "type": "error", "payload": { "message": "…" } }` (chosen):** one more envelope type, with a human-readable message only. There is one client and it only displays the text.
+- **Also a machine-readable `code`** (for example `"invalid_message"`): lets a client branch without parsing English. Worth adding when a client needs to react differently to different errors, not before.
+
+**Decision:** Reply and keep the connection, with the message-only shape. `parseFrame` in `protocol.ts` rejects binary frames like any other bad input, and the reply goes only to the sender.
+**Why:** It keeps the failure mode gentle and the protocol small, and leaves room to add a `code` later without breaking clients that only read `message`.
+
+**Boundary with the abuse case:** a frame larger than 16 KB never reaches this code. `ws` closes the connection itself with code 1009, and the `error` listener in `socket.ts` keeps that from crashing the server. A regression test starts a real server and sends an oversized frame to guard this.
+
+**Verified:** against the dev server with a real client (valid join and send get no reply yet; each kind of bad frame gets a specific error; the connection stays open), and by 22 tests that run a real WebSocket server on an ephemeral port, 12 isolated mutations of which none survive. One mutation initially did: removing a `readyState` check before sending. Testing `ws` 8 showed that sending on a closing or closed socket neither throws nor emits an error (the data is silently dropped), so the check was redundant and was removed.

@@ -87,3 +87,21 @@ export function parseClientMessage(raw: string): ParseResult {
       return fail(`unknown type "${data.type}"`);
   }
 }
+
+// What the server sends to a client. Errors only for now; "message" (a chat
+// message delivered to a channel) arrives with broadcasting.
+export type ServerMessage = { type: "error"; payload: { message: string } };
+
+export function errorMessage(message: string): ServerMessage {
+  return { type: "error", payload: { message } };
+}
+
+// Turns one raw WebSocket frame into a ParseResult. This protocol is JSON
+// text only (D-019), so a binary frame is rejected like any other bad input:
+// an error reply, and the connection stays open (D-028).
+// `data` is typed by what it must do (be turned into text) rather than as ws's
+// RawData, so this module stays free of the ws import.
+export function parseFrame(data: { toString(): string }, isBinary: boolean): ParseResult {
+  if (isBinary) return fail("binary frames are not supported");
+  return parseClientMessage(data.toString());
+}
