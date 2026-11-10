@@ -75,37 +75,61 @@ const MAX_LIMIT = 100;
 // from us instead of a database error.
 const ID_PATTERN = /^[1-9]\d{0,17}$/;
 
+// Query-string parsing for the messages route. Each function takes the raw,
+// untrusted value and returns either the parsed value or an error message,
+// the same result shape as parseClientMessage in chat/protocol.ts. They are
+// pure (no req/res), so they can be unit tested directly.
+type Parsed<T> = { ok: true; value: T } | { ok: false; error: string };
+
+// Ids stay strings: they are passed to Postgres as text and cast to bigint,
+// so nothing is lost to JS number precision on the way in.
+function parseChannelId(raw: unknown): Parsed<string> {
+  if (typeof raw !== "string" || !ID_PATTERN.test(raw)) {
+    return { ok: false, error: "channel id must be a positive integer" };
+  }
+  return { ok: true, value: raw };
+}
+
+function parseLimit(raw: unknown): Parsed<number> {
+  if (raw === undefined) return { ok: true, value: DEFAULT_LIMIT };
+  if (typeof raw !== "string" || !/^\d+$/.test(raw)) {
+    return { ok: false, error: "limit must be a positive integer" };
+  }
+  const value = Number(raw);
+  if (value < 1 || value > MAX_LIMIT) {
+    return { ok: false, error: `limit must be between 1 and ${MAX_LIMIT}` };
+  }
+  return { ok: true, value };
+}
+
+// `before` is optional: absent means "start from the newest message".
+function parseBefore(raw: unknown): Parsed<string | null> {
+  if (raw === undefined) return { ok: true, value: null };
+  if (typeof raw !== "string" || !ID_PATTERN.test(raw)) {
+    return { ok: false, error: "before must be a message id" };
+  }
+  return { ok: true, value: raw };
+}
+
 // GET /api/chat/channels/:id/messages?limit=50&before=<messageId>
 // Newest first. `before` is a cursor: "messages older than this id". The
 // client passes the oldest id it already has to load the next page back.
 chatRouter.get("/channels/:id/messages", async (req, res) => {
-  const channelId = req.params.id;
-  if (!ID_PATTERN.test(channelId)) {
-    return res.status(400).json({ error: "channel id must be a positive integer" });
+  const channelIdResult = parseChannelId(req.params.id);
+  if (!channelIdResult.ok) {
+    return res.status(400).json({ error: channelIdResult.error });
   }
-
-  let limit = DEFAULT_LIMIT;
-  if (req.query.limit !== undefined) {
-    const raw = req.query.limit;
-    if (typeof raw !== "string" || !/^\d+$/.test(raw)) {
-      return res.status(400).json({ error: "limit must be a positive integer" });
-    }
-    limit = Number(raw);
-    if (limit < 1 || limit > MAX_LIMIT) {
-      return res
-        .status(400)
-        .json({ error: `limit must be between 1 and ${MAX_LIMIT}` });
-    }
+  const limitResult = parseLimit(req.query.limit);
+  if (!limitResult.ok) {
+    return res.status(400).json({ error: limitResult.error });
   }
-
-  let before: string | null = null;
-  if (req.query.before !== undefined) {
-    const raw = req.query.before;
-    if (typeof raw !== "string" || !ID_PATTERN.test(raw)) {
-      return res.status(400).json({ error: "before must be a message id" });
-    }
-    before = raw;
+  const beforeResult = parseBefore(req.query.before);
+  if (!beforeResult.ok) {
+    return res.status(400).json({ error: beforeResult.error });
   }
+  const channelId = channelIdResult.value;
+  const limit = limitResult.value;
+  const before = beforeResult.value;
 
   // 404 for an unknown channel, so a typo'd id isn't mistaken for an empty one.
   const channel = await pool.query("select 1 from chat_channels where id = $1", [
