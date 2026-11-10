@@ -80,6 +80,7 @@ Each lab's HTTP routes live under `/api/<slug>` and its tables use a
 - **Connection Pooling**: Implement connection pooling for performance. *Built.* One shared pool (D-008).
 
 ## Testing strategy
+- Write the tests first (TDD, red-green): see rule 5 of the working agreement in the root `AGENTS.md`. Run the new tests and watch them fail for the right reason before writing any code.
 - Vitest is the test runner (`npm test`, or `npm run test:watch`). Tests sit next to the code as `*.test.ts`, import `describe`/`it`/`expect` explicitly (no globals), and use `.js` extensions on relative imports like all backend code. `tsconfig.build.json` keeps them out of `dist/`; `npm run typecheck` still checks them.
 - Expected values in a test must come from an independent source (a hand calculation, another tool), never from the function under test. Check that a new test can fail by breaking the code on purpose.
 - Keep logic that needs testing in modules that do not import `db/pool` (it pulls in `config.ts`, which exits without `DATABASE_URL`).

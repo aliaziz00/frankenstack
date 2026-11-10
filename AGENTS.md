@@ -15,6 +15,13 @@ decision. Your job is to explain and present options, not to decide.
    it does, where it fits in the overall system design, and any API or
    data-model implications.
 4. **When unsure, ask.** Don't assume approval or fill gaps with defaults.
+5. **Test first (TDD, red-green).** Always write the tests before the code.
+   Write the failing test(s) for the behaviour first, then run them and see
+   them fail (red) before any implementation exists. The failure has to be for
+   the right reason, meaning the behaviour is missing, not a typo or a broken
+   import. Only then write the code to get them passing, and run them again
+   (green). Within one approved step the order is: test, red run, code, green
+   run. Show the red run in the conversation, not just the green one.
 
 See [CONCEPTS.md](./CONCEPTS.md) for the concepts and trade-offs covered so
 far, [ROADMAP.md](./ROADMAP.md) for candidate next systems, and

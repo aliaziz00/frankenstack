@@ -73,6 +73,7 @@ LabPage render from the registry, so they don't change.
 - Implement proper error boundaries
 
 ## Testing
+- Write the tests first (TDD, red-green): see rule 5 of the working agreement in the root `AGENTS.md`. Run the new tests and watch them fail for the right reason before writing any code.
 - Vitest is the test runner (`npm test`, or `npm run test:watch`). Tests sit next to the code as `*.test.ts` and import `describe`/`it`/`expect` explicitly (no globals). They run in a Node environment for now; jsdom and React Testing Library are added with the first component test.
 - Write unit tests for utility functions. Covered so far: `lib/http.ts` (`request()`).
 - Test component behavior, not implementation
