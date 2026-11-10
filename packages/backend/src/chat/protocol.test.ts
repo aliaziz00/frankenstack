@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { MAX_BODY_LENGTH, MAX_FRAME_BYTES, parseClientMessage } from "./protocol.js";
+import {
+  errorMessage,
+  MAX_BODY_LENGTH,
+  MAX_FRAME_BYTES,
+  parseClientMessage,
+  parseFrame,
+} from "./protocol.js";
 
 // Frames arrive as untrusted text, so these tests are mostly about rejecting
 // bad input with a clear message. Error strings are part of the contract: a
@@ -169,5 +175,50 @@ describe("limits", () => {
     // size ws enforces, or a legal message would be rejected by maxPayload.
     const largest = send({ channelId: 9007199254740991, body: "😀".repeat(MAX_BODY_LENGTH) });
     expect(Buffer.byteLength(largest, "utf8")).toBeLessThan(MAX_FRAME_BYTES);
+  });
+});
+
+describe("parseFrame", () => {
+  const binaryError = { ok: false, error: "binary frames are not supported" };
+
+  it("rejects a binary frame, even one that contains valid JSON", () => {
+    expect(parseFrame(Buffer.from(join({ channelId: 1 })), true)).toEqual(binaryError);
+  });
+
+  it("rejects an empty binary frame", () => {
+    expect(parseFrame(Buffer.alloc(0), true)).toEqual(binaryError);
+  });
+
+  it("parses a text frame given as a Buffer, which is what ws delivers", () => {
+    expect(parseFrame(Buffer.from(join({ channelId: 1 })), false)).toEqual({
+      ok: true,
+      message: { type: "join", payload: { channelId: 1 } },
+    });
+  });
+
+  it("decodes UTF-8 text frames, so multi-byte characters survive", () => {
+    const frame = Buffer.from(send({ channelId: 1, body: "héllo 😀" }), "utf8");
+    expect(parseFrame(frame, false)).toEqual({
+      ok: true,
+      message: { type: "send", payload: { channelId: 1, body: "héllo 😀" } },
+    });
+  });
+
+  it("reports parser errors for a bad text frame", () => {
+    expect(parseFrame(Buffer.from("not json"), false)).toEqual({
+      ok: false,
+      error: "frame is not valid JSON",
+    });
+  });
+});
+
+describe("errorMessage", () => {
+  it("builds the { type, payload } envelope the client expects", () => {
+    expect(errorMessage("nope")).toEqual({ type: "error", payload: { message: "nope" } });
+  });
+
+  it("survives a JSON round trip unchanged", () => {
+    const message = errorMessage('unknown type "nuke"');
+    expect(JSON.parse(JSON.stringify(message))).toEqual(message);
   });
 });

@@ -1,6 +1,14 @@
 import type { Server } from "node:http";
-import { WebSocketServer } from "ws";
-import { MAX_FRAME_BYTES } from "./protocol.js";
+import { WebSocket, WebSocketServer } from "ws";
+import { errorMessage, MAX_FRAME_BYTES, parseFrame, type ServerMessage } from "./protocol.js";
+
+// Sends one message to one client, as a JSON text frame. No readyState check
+// is needed: on ws 8, send() on a closing or closed socket neither throws nor
+// emits an error, it silently drops the data (verified), and "message" events
+// only fire on a socket that has already opened.
+function sendTo(ws: WebSocket, message: ServerMessage) {
+  ws.send(JSON.stringify(message));
+}
 
 // Attaches a WebSocket endpoint at /ws to an existing HTTP server.
 //
@@ -39,6 +47,21 @@ export function attachChatSocket(server: Server) {
     // closes the connection itself afterwards; we only need to not crash.
     ws.on("error", (err) => {
       console.error("ws connection error:", err.message);
+    });
+    ws.on("message", (data, isBinary) => {
+      const result = parseFrame(data, isBinary);
+
+      if (!result.ok) {
+        // A bad frame is a mistake, not an attack: say what was wrong and keep
+        // the connection (D-028). Oversized frames never get here: ws closes
+        // those itself (1009).
+        sendTo(ws, errorMessage(result.error));
+        return;
+      }
+
+      // Joining, leaving and sending are not built yet. Log the type only:
+      // never message bodies, which are users' content.
+      console.log(`ws received ${result.message.type}`);
     });
     ws.on("close", () => {
       console.log(`ws closed (${wss.clients.size} open)`);

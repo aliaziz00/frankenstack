@@ -33,7 +33,7 @@ src/
     redirect.ts      # /s/:code (redirect and click count)
     chat.ts          # /api/chat (channels, users, message history)
   chat/              # the chat WebSocket layer
-    socket.ts        # /ws upgrade handling and connections
+    socket.ts        # /ws upgrade handling, connections, and replies (tested against a real server, no DB)
     protocol.ts      # message types and frame validation
     params.ts        # query-string parsing for the messages route (DB-free, unit tested)
   db/
@@ -68,7 +68,7 @@ Each lab's HTTP routes live under `/api/<slug>` and its tables use a
 - **Business Logic**: Validate business rules at the service layer. *Not built.* There is no service layer; routes call the pool directly.
 
 ## Error handling
-- **Consistent Format**: Use consistent error response format. *Partly.* REST routes return `{ "error": "message" }`. The WebSocket `error` message shape is not decided yet.
+- **Consistent Format**: Use consistent error response format. *Built.* REST routes return `{ "error": "message" }`; WebSocket errors are `{ "type": "error", "payload": { "message": "..." } }` sent only to the sender, with the connection kept open (D-028).
 - **HTTP Status Codes**: Use appropriate status codes. *Built.* `201` on create, `400` for bad input, `404` for unknown resources.
 - **Logging**: Log errors with sufficient context. *Not built.* `console.log` only.
 - **User-Friendly Messages**: Provide helpful error messages. *Built.* Messages name the field and the rule.
@@ -83,7 +83,7 @@ Each lab's HTTP routes live under `/api/<slug>` and its tables use a
 - Vitest is the test runner (`npm test`, or `npm run test:watch`). Tests sit next to the code as `*.test.ts`, import `describe`/`it`/`expect` explicitly (no globals), and use `.js` extensions on relative imports like all backend code. `tsconfig.build.json` keeps them out of `dist/`; `npm run typecheck` still checks them.
 - Expected values in a test must come from an independent source (a hand calculation, another tool), never from the function under test. Check that a new test can fail by breaking the code on purpose.
 - Keep logic that needs testing in modules that do not import `db/pool` (it pulls in `config.ts`, which exits without `DATABASE_URL`).
-- **Unit Tests**: Test individual functions and methods. *Partly.* Covered: `lib/base62.ts`, `lib/url.ts`, `chat/protocol.ts` and `chat/params.ts`. Not covered: routes and anything that touches the database (see Integration Tests and Database Tests).
+- **Unit Tests**: Test individual functions and methods. *Partly.* Covered: `lib/base62.ts`, `lib/url.ts`, `chat/protocol.ts`, `chat/params.ts` and `chat/socket.ts` (a real WebSocket server on an ephemeral port with a real client; it needs no database because `socket.ts` does not import the pool). Not covered: routes and anything that touches the database (see Integration Tests and Database Tests).
 - **Integration Tests**: Test API endpoints end-to-end. *Not built.*
 - **Database Tests**: Test database operations. *Not built.*
 - **Mock External Services**: Mock third-party API calls. *Not built.* There are no external services yet.
