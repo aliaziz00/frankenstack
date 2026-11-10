@@ -326,3 +326,26 @@ Platform · Decided
 **Known limit:** readiness also returns `503` once shutdown starts (D-024), but `shutdown()` calls `server.close()` straight away, which refuses new connections and closes idle keep-alive ones. Tested: a keep-alive connection opened before the signal got no second response. So the branch is rarely reached. It only becomes a real drain signal if shutdown waits a few seconds, still serving, between flipping the flag and closing the server (the Kubernetes "preStop sleep" pattern). Not implemented, since there is no load balancer yet.
 
 **Also observed:** with a database that never answers, `pool.end()` waits on the stuck connection, so shutdown ends via the 10-second timeout with exit 1 (D-024's safety net doing its job).
+
+## Frontend
+
+### D-026 Error boundaries around pages and demos
+Frontend · Decided
+
+**Options (placement)**
+- **Around the routed page content and around each lab's Demo (chosen):** a crash in a demo leaves the nav and the design write-up intact (the write-up is the portfolio's real content), and a crash elsewhere in a page leaves the nav usable. Boundaries nest, so the innermost one catches first.
+- **One at the app root:** a last-resort safety net, but it replaces the whole page, so one bug hides everything.
+- **Router `errorElement`:** built in, but it only works with a data router (`createBrowserRouter`); the app uses `BrowserRouter` with `<Routes>`, so it would mean migrating the router.
+
+**Options (implementation)**
+- **Hand-written class component (chosen):** about 40 lines, no dependency, and the mechanism is visible (`getDerivedStateFromError` switches to the fallback, `componentDidCatch` logs). It has to be a class: React has no hook for error boundaries, a standing exception to the functional-components rule.
+- **`react-error-boundary` package:** adds reset helpers and a hook, but is a dependency for one small component.
+
+**Decision:** `components/ErrorBoundary.tsx`, used in `App.tsx` (keyed by `pathname`) and around each `Demo` in `LabPage.tsx`, outside `Suspense` so a failing lazy import is caught too. The fallback shows a generic message and a "Reload page" button; the real error goes to the console only.
+**Why:** The demo is the code most likely to break, and its failure should not take the page down with it.
+
+**Finding: "Try again" cannot recover a failed lazy import.** The first version had a button that reset the boundary. Tested in the browser by simulating a chunk that fails to load: after fixing the cause and clicking "Try again", the fallback reappeared, because React memoizes the rejected import inside the `lazy` component and re-rendering rethrows the same error. A failed chunk (flaky network, or a deploy that replaced the file) is the most realistic failure for a lazy demo, so the button now reloads the page, which recovers both that and ordinary render errors. Alternatives: both buttons, or recreating the lazy component on retry (a `lazyWithRetry` helper), which is more machinery than this site needs.
+
+**Why the boundary is keyed by `pathname`:** a boundary that caught an error keeps showing its fallback until reset, so without the key, navigating away from a crashed page would still show the error. Tested: with Home crashed, navigating to a lab page renders it normally.
+
+**Not caught by boundaries:** errors in event handlers and async code (a rejected `fetch`, `setTimeout`) and in the boundary itself. The demo's API calls already handle their own errors with `try/catch` and state.

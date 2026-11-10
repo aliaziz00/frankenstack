@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Link, useParams } from "react-router-dom";
+import ErrorBoundary from "../components/ErrorBoundary";
 import { findLab } from "../labs/registry";
 
 export default function LabPage() {
@@ -34,10 +35,15 @@ export default function LabPage() {
 
       <section>
         <h2>Demo</h2>
+        {/* The boundary sits outside Suspense so it also catches a lazy()
+            chunk that fails to load. A crash in the demo leaves the design
+            write-up below intact. */}
         {Demo ? (
-          <Suspense fallback={<p className="muted">Loading demo…</p>}>
-            <Demo />
-          </Suspense>
+          <ErrorBoundary label="This demo">
+            <Suspense fallback={<p className="muted">Loading demo…</p>}>
+              <Demo />
+            </Suspense>
+          </ErrorBoundary>
         ) : (
           <p className="muted">Not built yet. The design below is the plan.</p>
         )}

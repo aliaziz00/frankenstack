@@ -34,6 +34,8 @@ src/
   main.tsx             # entry point
   App.tsx              # BrowserRouter and site shell; routes / and /labs/:slug
   App.css, index.css   # styles
+  components/          # shared components used by more than one page
+    ErrorBoundary.tsx  # catches render errors (a class: React has no hook for this); see D-026
   pages/
     Home.tsx           # lab index, rendered from the registry
     LabPage.tsx        # one lab: live demo plus design write-up

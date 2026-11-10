@@ -42,6 +42,26 @@
   color: #ef4444;
 }
 
+.error-boundary {
+  padding: 1rem 1.2rem;
+  border: 1px solid #ef444466;
+  border-radius: 8px;
+}
+
+.error-boundary p {
+  margin: 0 0 0.75rem;
+}
+
+.error-boundary button {
+  padding: 0.4rem 1rem;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  border: none;
+  background: #6366f1;
+  color: white;
+  cursor: pointer;
+}
+
 .link-list {
   list-style: none;
   padding: 0;
