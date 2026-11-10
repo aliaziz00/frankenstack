@@ -32,6 +32,7 @@ You are a React frontend development specialist.
 ```
 src/
   main.tsx             # entry point
+  (public/ holds static files: the favicon set is Twemoji artwork under CC-BY 4.0, credited in the README)
   App.tsx              # BrowserRouter and site shell; routes / and /labs/:slug
   App.css              # component styles; colours come from the tokens
   index.css            # global base and the colour tokens (light + dark)

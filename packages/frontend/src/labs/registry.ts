@@ -41,25 +41,38 @@ export const labs: Lab[] = [
   {
     slug: "chat",
     title: "Real-time Chat",
-    summary: "Rooms, live delivery over WebSockets, and message history.",
+    summary: "Channels, live delivery over WebSockets, and message history.",
     status: "planned",
-    concepts: ["WebSockets", "Pub/Sub", "Presence", "Horizontal scaling"],
+    concepts: ["WebSockets", "Cursor paging", "Message ordering", "Input validation"],
     design: {
       problem:
-        "Deliver messages to everyone in a room within moments, keep history, and keep working when more than one server is running.",
+        "Deliver messages to everyone in a channel within moments, and keep a history that someone joining later can scroll back through.",
       requirements: [
-        "Join a room and see live messages from others",
-        "Persist history and load it on join",
-        "Show who is online",
-        "Stay correct with multiple backend instances",
+        "Pick a display name and see the list of channels",
+        "Join a channel and see live messages from others",
+        "Save every message before broadcasting it, so nothing is lost",
+        "Load history on join, newest first, one page at a time",
+        "Reconnect after a dropped connection",
       ],
       decisions: [
         {
-          title: "Plan: Postgres for history, Redis pub/sub for fan-out",
-          body: "Persist each message, then publish it so every instance can push to its own connected sockets. This is the standard answer to stateful connections not being shareable across servers.",
+          title: "Plan: WebSockets with a typed envelope",
+          body: "One connection per user carries every event as { type, payload }: join, leave and send from the client; message and error from the server. A hand-written validator treats every frame as untrusted input, and the server drops frames over 16 KB. The alternatives were Socket.IO, which hides the mechanics, and Server-Sent Events, which only flow one way.",
+        },
+        {
+          title: "Plan: Postgres is the source of truth, paged by cursor",
+          body: "Sequential ids give a total order inside one database. History is read newest first with a cursor (before=<id>) over a (channel_id, id desc) index, because offset paging slows down with depth and shifts as new messages arrive.",
+        },
+        {
+          title: "Identity is a display name, not a login",
+          body: "Names are not unique and every sign-in creates a user row, so the id is the identity. Real authentication is big enough to be its own lab.",
         },
       ],
-      limits: ["Not built yet."],
+      limits: [
+        "Built so far: the schema, the REST endpoints and a WebSocket endpoint that accepts connections. Not built: joining channels, sending, broadcasting and the UI.",
+        "Presence, typing indicators, threads and direct messages are out of scope for the first version.",
+        "One server process only. A second instance could not reach the sockets held by the first without a shared pub/sub layer (Redis is the usual answer), so running several instances is a later step.",
+      ],
     },
   },
 ];

@@ -130,3 +130,12 @@ still touches several core system-design ideas — see
 | `npm run lint`       | ESLint across the repo                    |
 | `npm run typecheck`  | TypeScript, both packages (tests included) |
 | `npm run build`      | Production build of both packages         |
+
+## Credits
+
+The favicon is the zombie emoji from [Twemoji](https://github.com/jdecked/twemoji)
+("Twemoji graphics made by Twitter and other contributors"), licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+`packages/frontend/public/favicon.svg` is the original file, unmodified.
+`favicon-32.png` is that file resized to 32 px, and `apple-touch-icon.png` is
+it resized to 180 px with a white background and padding added.
