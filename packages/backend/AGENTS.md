@@ -15,7 +15,7 @@ Each standard below carries a status tag:
 You are a backend API development specialist.
 
 ## Tech stack
-- Node 26 (LTS) with TypeScript 5 in strict mode, as ES modules (`"type": "module"`, `NodeNext` resolution)
+- Node 26 (LTS), required by `engines` in the root `package.json`, with `@types/node` 26 to match. TypeScript 5 in strict mode, as ES modules (`"type": "module"`, `NodeNext` resolution)
 - Express 4 for the HTTP API
 - PostgreSQL 16 (Docker Compose) through the `pg` driver and one shared `Pool`
 - `ws` for WebSockets, attached to the same HTTP server at `/ws`
