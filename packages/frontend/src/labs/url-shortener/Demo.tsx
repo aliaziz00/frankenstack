@@ -10,18 +10,27 @@ export default function Demo() {
   const [links, setLinks] = useState<ShortLink[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // True until the first response (or error) arrives. Without it the empty
+  // list looks identical to "nothing loaded yet" and the page briefly claims
+  // "No links yet." while the request is still in flight.
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Cancel the request if the component unmounts first (and in development,
     // where React StrictMode runs this effect twice, the first run).
     const controller = new AbortController();
     listShortLinks(controller.signal)
-      .then(setLinks)
+      .then((loaded) => {
+        setLinks(loaded);
+        setLoading(false);
+      })
       .catch((err) => {
         // Aborting rejects with an AbortError. That is us cancelling on
-        // purpose, not a failure to show the user.
+        // purpose, not a failure to show the user. Do not clear `loading`
+        // here either: under StrictMode another request is already in flight.
         if (err instanceof DOMException && err.name === "AbortError") return;
         setError(errorMessage(err));
+        setLoading(false);
       });
     return () => controller.abort();
   }, []);
@@ -75,7 +84,10 @@ export default function Demo() {
             <span className="clicks">{link.clickCount} clicks</span>
           </li>
         ))}
-        {links.length === 0 && !error && <li className="empty">No links yet.</li>}
+        {loading && <li className="empty">Loading…</li>}
+        {!loading && links.length === 0 && !error && (
+          <li className="empty">No links yet.</li>
+        )}
       </ul>
     </div>
   );
