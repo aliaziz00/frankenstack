@@ -234,3 +234,23 @@ Chat · Decided
 **Why:** Keeps one connection per user and leaves room for more event types.
 
 **At larger scale (not built):** binary schema'd encoding (Protobuf) with versioning for old clients, compression, per-user inbox subscriptions with multi-device fan-out, acks and sequence numbers for reliable delivery, push notifications for offline users, end-to-end encrypted payloads, and separating droppable events (typing, presence) from durable messages. The harder scaling problem is routing a message to whichever server holds the recipient's socket (shared pub/sub), not the format.
+
+---
+
+## Platform: backend robustness
+
+### D-020 Async route errors: upgrade to Express 5
+Platform · Decided
+
+**Options**
+- **Upgrade to Express 5 (chosen):** rejected promises from async routes are forwarded to the error handler natively, with no helper code and no extra package. Express 5 is the `latest` npm tag (5.3.0), so it is also where new projects start. Cost: a major-version upgrade. A scratch trial found no code changes were needed (route paths here are simple); the one visible difference is the default query parser, which no longer builds nested objects from `a[b]=1`.
+- **Small `asyncHandler` wrapper on Express 4:** no dependency and explicit, but every route must be wrapped (easy to forget on a new one), and it is throwaway code once on Express 5.
+- **`express-async-errors` package:** one import and no route changes, but it monkey-patches Express internals to work around an Express 4 limitation.
+- **`try/catch` in every route:** fully explicit, but repetitive and easy to forget.
+
+**Decision:** Express 5.3.0.
+**Why:** It fixes the problem at the framework level instead of working around it. On Express 4 a rejected async route either crashed the process (Node's default for an unhandled rejection) or left the request hanging forever if a global `unhandledRejection` listener swallowed it. On Express 5 the client gets a `500` and the server keeps running.
+
+**Still needed:** Express 5's default error responses are HTML, and outside production they include the stack trace and server file paths. A malformed JSON body also gets an HTML `400`. A central error middleware that returns the API's `{ "error": "…" }` shape (and logs real errors server-side only) is the next step.
+
+**Error handler choices (recorded with the upgrade):** the central handler passes through a 4xx `status` that an error carries (so a malformed JSON body stays `400` and an oversized one `413`), and treats everything else as `500`. A `500` replies with a generic `{ "error": "internal server error" }` and logs the real error server-side only, so SQL text, file paths and stack traces never reach clients. Unknown routes get a JSON `404`. Express's defaults were rejected because they reply with HTML and, outside production, expose stack traces.
