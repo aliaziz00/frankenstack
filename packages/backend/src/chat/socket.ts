@@ -32,6 +32,14 @@ export function attachChatSocket(server: Server) {
 
   wss.on("connection", (ws) => {
     console.log(`ws connected (${wss.clients.size} open)`);
+    // Required, not optional: ws emits "error" for protocol violations such
+    // as a frame over maxPayload (RangeError). An EventEmitter "error" with
+    // no listener is thrown as an uncaught exception and kills the process,
+    // so one oversized frame from any client would take the server down. ws
+    // closes the connection itself afterwards; we only need to not crash.
+    ws.on("error", (err) => {
+      console.error("ws connection error:", err.message);
+    });
     ws.on("close", () => {
       console.log(`ws closed (${wss.clients.size} open)`);
     });

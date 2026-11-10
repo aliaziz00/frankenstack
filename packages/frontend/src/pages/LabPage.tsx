@@ -20,14 +20,14 @@ export default function LabPage() {
   return (
     <article className="lab-page">
       <Link to="/" className="back">
-        ← All labs
+        <span aria-hidden="true">←</span> All labs
       </Link>
       <header>
         <h1>{lab.title}</h1>
         <p className="subtitle">{lab.summary}</p>
         <ul className="tags">
-          {lab.concepts.map((c) => (
-            <li key={c}>{c}</li>
+          {lab.concepts.map((concept) => (
+            <li key={concept}>{concept}</li>
           ))}
         </ul>
       </header>
@@ -48,18 +48,18 @@ export default function LabPage() {
         <p>{design.problem}</p>
         <h3>Requirements</h3>
         <ul>
-          {design.requirements.map((r) => (
-            <li key={r}>{r}</li>
+          {design.requirements.map((requirement) => (
+            <li key={requirement}>{requirement}</li>
           ))}
         </ul>
       </section>
 
       <section>
         <h2>Design decisions</h2>
-        {design.decisions.map((d) => (
-          <div key={d.title} className="decision">
-            <h3>{d.title}</h3>
-            <p>{d.body}</p>
+        {design.decisions.map((decision) => (
+          <div key={decision.title} className="decision">
+            <h3>{decision.title}</h3>
+            <p>{decision.body}</p>
           </div>
         ))}
       </section>
@@ -67,8 +67,8 @@ export default function LabPage() {
       <section>
         <h2>Where it breaks</h2>
         <ul>
-          {design.limits.map((l) => (
-            <li key={l}>{l}</li>
+          {design.limits.map((limit) => (
+            <li key={limit}>{limit}</li>
           ))}
         </ul>
       </section>

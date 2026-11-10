@@ -1,6 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createShortLink, listShortLinks, type ShortLink } from "./api";
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : "Something went wrong";
+}
+
 export default function Demo() {
   const [longUrl, setLongUrl] = useState("");
   const [links, setLinks] = useState<ShortLink[]>([]);
@@ -10,11 +14,11 @@ export default function Demo() {
   useEffect(() => {
     listShortLinks()
       .then(setLinks)
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(errorMessage(err)));
   }, []);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
@@ -22,7 +26,7 @@ export default function Demo() {
       setLinks((prev) => [created, ...prev]);
       setLongUrl("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(errorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -34,16 +38,21 @@ export default function Demo() {
         <input
           type="url"
           required
+          aria-label="Long URL to shorten"
           placeholder="https://example.com/some/very/long/path"
           value={longUrl}
-          onChange={(e) => setLongUrl(e.target.value)}
+          onChange={(event) => setLongUrl(event.target.value)}
         />
         <button type="submit" disabled={submitting}>
           {submitting ? "Shortening…" : "Shorten"}
         </button>
       </form>
 
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
 
       <ul className="link-list">
         {links.map((link) => (

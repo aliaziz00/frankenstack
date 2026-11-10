@@ -3,10 +3,32 @@ import { pool } from "../db/pool.js";
 
 export const chatRouter = Router();
 
+// Rows as pg returns them: bigint columns arrive as strings and timestamptz
+// columns as Date objects.
+interface ChannelRow {
+  id: string;
+  name: string;
+  created_at: Date;
+}
+
+interface UserRow {
+  id: string;
+  display_name: string;
+}
+
+interface MessageRow {
+  id: string;
+  channel_id: string;
+  user_id: string;
+  display_name: string;
+  body: string;
+  created_at: Date;
+}
+
 // GET /api/chat/channels -> every channel, alphabetical.
 // No pagination: channels are a small, bounded list (unlike messages).
 chatRouter.get("/channels", async (_req, res) => {
-  const result = await pool.query(
+  const result = await pool.query<ChannelRow>(
     "select id, name, created_at from chat_channels order by name",
   );
   res.json(
@@ -38,7 +60,7 @@ chatRouter.post("/users", async (req, res) => {
       .json({ error: "displayName must be 1-30 characters" });
   }
 
-  const result = await pool.query(
+  const result = await pool.query<UserRow>(
     "insert into chat_users (display_name) values ($1) returning id, display_name",
     [name],
   );
@@ -95,7 +117,7 @@ chatRouter.get("/channels/:id/messages", async (req, res) => {
 
   // Uses chat_messages_channel_id_id_idx: jump to (channel, before) in the
   // index, then read `limit` entries in order. No sort, no table scan.
-  const result = await pool.query(
+  const result = await pool.query<MessageRow>(
     `select m.id, m.channel_id, m.user_id, u.display_name, m.body, m.created_at
        from chat_messages m
        join chat_users u on u.id = m.user_id

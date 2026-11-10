@@ -65,5 +65,5 @@ export const labs: Lab[] = [
 ];
 
 export function findLab(slug: string | undefined): Lab | undefined {
-  return labs.find((l) => l.slug === slug);
+  return labs.find((lab) => lab.slug === slug);
 }

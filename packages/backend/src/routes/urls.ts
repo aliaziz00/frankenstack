@@ -4,6 +4,25 @@ import { toBase62 } from "../lib/base62.js";
 
 export const urlsRouter = Router();
 
+// A row of the `urls` table as pg returns it: bigint columns arrive as
+// strings, and timestamptz columns arrive as Date objects.
+interface UrlRow {
+  short_code: string;
+  long_url: string;
+  click_count: string;
+  created_at: Date;
+}
+
+// Row -> API JSON (snake_case columns to camelCase fields, bigint to number).
+function toShortLink(row: UrlRow) {
+  return {
+    shortCode: row.short_code,
+    longUrl: row.long_url,
+    clickCount: Number(row.click_count),
+    createdAt: row.created_at,
+  };
+}
+
 function isValidHttpUrl(value: string): boolean {
   try {
     const url = new URL(value);
@@ -37,7 +56,7 @@ urlsRouter.post("/", async (req, res) => {
   const id = BigInt(idResult.rows[0].nextval);
   const shortCode = toBase62(id);
 
-  const insertResult = await pool.query<{ created_at: string }>(
+  const insertResult = await pool.query<{ created_at: Date }>(
     "insert into urls (id, short_code, long_url) values ($1, $2, $3) returning created_at",
     [id.toString(), shortCode, longUrl],
   );
@@ -55,33 +74,20 @@ urlsRouter.post("/", async (req, res) => {
 
 // GET /api/urls -> most recently created links, for the homepage list
 urlsRouter.get("/", async (_req, res) => {
-  const result = await pool.query(
+  const result = await pool.query<UrlRow>(
     "select short_code, long_url, click_count, created_at from urls order by created_at desc limit 50",
   );
-  res.json(
-    result.rows.map((row) => ({
-      shortCode: row.short_code,
-      longUrl: row.long_url,
-      clickCount: Number(row.click_count),
-      createdAt: row.created_at,
-    })),
-  );
+  res.json(result.rows.map(toShortLink));
 });
 
 // GET /api/urls/:code/stats -> lookup without incrementing the click count
 urlsRouter.get("/:code/stats", async (req, res) => {
-  const result = await pool.query(
+  const result = await pool.query<UrlRow>(
     "select short_code, long_url, click_count, created_at from urls where short_code = $1",
     [req.params.code],
   );
   if (result.rows.length === 0) {
     return res.status(404).json({ error: "short code not found" });
   }
-  const row = result.rows[0];
-  res.json({
-    shortCode: row.short_code,
-    longUrl: row.long_url,
-    clickCount: Number(row.click_count),
-    createdAt: row.created_at,
-  });
+  res.json(toShortLink(result.rows[0]));
 });

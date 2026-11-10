@@ -21,8 +21,8 @@ export default function Home() {
             </div>
             <p>{lab.summary}</p>
             <ul className="tags">
-              {lab.concepts.map((c) => (
-                <li key={c}>{c}</li>
+              {lab.concepts.map((concept) => (
+                <li key={concept}>{concept}</li>
               ))}
             </ul>
           </Link>

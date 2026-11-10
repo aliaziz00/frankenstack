@@ -1,5 +1,5 @@
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,11 +12,11 @@ export default defineConfig({
       // (the backend still allows it directly, for curl/Postman use). In
       // production this same role is played by a real reverse proxy /
       // gateway sitting in front of both services.
-      '/api': 'http://localhost:4000',
+      "/api": "http://localhost:4000",
       // Short-link redirects are served by the backend too. Keys are
       // prefix matches unless they start with ^, so a bare '/s' would also
       // swallow Vite's own /src/* module requests.
-      '^/s/': 'http://localhost:4000',
+      "^/s/": "http://localhost:4000",
     },
   },
-})
+});

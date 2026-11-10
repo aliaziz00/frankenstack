@@ -7,9 +7,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="page">
-        <nav className="nav">
+        <nav className="nav" aria-label="Main">
           <Link to="/" className="brand">
-            🧟 frankenstack
+            <span aria-hidden="true">🧟</span> frankenstack
           </Link>
         </nav>
         <main>

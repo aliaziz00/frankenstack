@@ -10,15 +10,15 @@ export interface ShortLink {
 // backend (see vite.config.ts). No base URL to configure here, which is
 // the point of the proxy.
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
+  const response = await fetch(path, {
     headers: { "Content-Type": "application/json" },
     ...init,
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? `Request failed: ${res.status}`);
+  if (!response.ok) {
+    const body: { error?: string } = await response.json().catch(() => ({}));
+    throw new Error(body.error ?? `Request failed: ${response.status}`);
   }
-  return res.json() as Promise<T>;
+  return response.json() as Promise<T>;
 }
 
 export function createShortLink(longUrl: string): Promise<ShortLink> {
