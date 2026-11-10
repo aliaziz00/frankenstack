@@ -85,14 +85,19 @@ when it first creates its data volume, so changing it later means running
 GitHub Actions runs on every pull request into `main` and on every push to
 `main` (see `.github/workflows/ci.yml`):
 
-- **checks:** `npm ci`, then `npm run lint`, `npm run typecheck`, `npm run build`
+- **checks:** `npm ci`, then `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`
 - **audit:** `npm audit --audit-level=high` (fails on high or critical advisories only)
 
 Run the same commands locally before opening a PR:
 
 ```bash
-npm run lint && npm run typecheck && npm run build
+npm run lint && npm run typecheck && npm test && npm run build
 ```
+
+Tests use [Vitest](https://vitest.dev) and live next to the code as `*.test.ts`.
+They need no database: they cover pure logic (ID encoding, request validation,
+the WebSocket message parser, the frontend fetch wrapper). `npm run test:watch`
+inside a package re-runs them as you edit.
 
 Known, accepted advisories: React Router (moderate; the fix is a breaking v7
 upgrade) and the ESLint toolchain's `minimatch` (moderate, dev-only; waiting on
@@ -121,3 +126,7 @@ still touches several core system-design ideas — see
 | `npm run db:migrate` | Apply `schema.sql` to the database        |
 | `npm run dev:backend`  | Start the Express API with hot reload   |
 | `npm run dev:frontend` | Start the Vite dev server               |
+| `npm test`           | Run the unit tests in both packages       |
+| `npm run lint`       | ESLint across the repo                    |
+| `npm run typecheck`  | TypeScript, both packages (tests included) |
+| `npm run build`      | Production build of both packages         |

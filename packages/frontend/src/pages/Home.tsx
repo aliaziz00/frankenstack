@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import ConceptTags from "../components/ConceptTags";
 import { labs } from "../labs/registry";
 
 export default function Home() {
@@ -20,11 +21,7 @@ export default function Home() {
               <span className={`badge ${lab.status}`}>{lab.status}</span>
             </div>
             <p>{lab.summary}</p>
-            <ul className="tags">
-              {lab.concepts.map((c) => (
-                <li key={c}>{c}</li>
-              ))}
-            </ul>
+            <ConceptTags concepts={lab.concepts} />
           </Link>
         ))}
       </section>

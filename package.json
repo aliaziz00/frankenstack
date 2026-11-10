@@ -5,6 +5,9 @@
   "workspaces": [
     "packages/*"
   ],
+  "engines": {
+    "node": ">=26"
+  },
   "scripts": {
     "dev:backend": "npm run dev -w packages/backend",
     "dev:frontend": "npm run dev -w packages/frontend",
@@ -13,6 +16,7 @@
     "db:migrate": "npm run migrate -w packages/backend",
     "lint": "eslint .",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {

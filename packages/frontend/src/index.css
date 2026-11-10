@@ -1,5 +1,38 @@
+/* Colour tokens. Every colour in App.css comes from here. Light values
+   are the defaults; the dark block below overrides only what has to differ.
+   The page follows the system setting (color-scheme + prefers-color-scheme);
+   there is no manual toggle.
+
+   Text colours target WCAG AA (4.5:1 against the page background: #ffffff in
+   light, #121212 in dark), and --border-strong targets 3:1 because it marks
+   the edge of form controls. src/tokens.test.ts checks all of this, so edit
+   the values together with that test. */
 :root {
   color-scheme: light dark;
+
+  /* Fill behind white button text, and the hover/focus accent. */
+  --accent: #4f46e5;
+  /* Link text. */
+  --link: #4f46e5;
+  /* Error text. */
+  --danger: #dc2626;
+  /* The "live" badge. */
+  --success: #15803d;
+  /* Edge of form controls: has to be visible (3:1). */
+  --border-strong: #767676;
+  /* Decorative edges (cards, list rows, badges): deliberately subtle. */
+  --border: #8883;
+  /* Tag chips and other quiet surfaces. */
+  --surface: #8882;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --link: #818cf8;
+    --danger: #f87171;
+    --success: #4ade80;
+    --border-strong: #8a8a8a;
+  }
 }
 
 body {

@@ -1,0 +1,7 @@
+{
+  // The production build: the same compiler settings, minus the tests, so
+  // *.test.ts files never end up in dist/. `npm run typecheck` keeps using
+  // tsconfig.json, which includes them, so tests are still type-checked.
+  "extends": "./tsconfig.json",
+  "exclude": ["src/**/*.test.ts"]
+}
